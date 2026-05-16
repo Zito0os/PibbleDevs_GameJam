@@ -22,6 +22,8 @@ public class Selected : MonoBehaviour
         {
             Deselect();
             SelectedObject(hit.transform);
+            
+            // Check for chest interaction
             if (hit.collider.tag == "Cofre")
             {
                 if (Input.GetKeyDown(KeyCode.E))
@@ -29,7 +31,29 @@ public class Selected : MonoBehaviour
                     hit.collider.GetComponent<ChestController>().AbrirCofre();
                     hit.collider.GetComponent<ChestController>().OnAfterAbrirCofre();
                 }
-
+            }
+            // Check for item pickup
+            else if (hit.collider.tag == "Item")
+            {
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    ItemPickup itemPickup = hit.collider.GetComponent<ItemPickup>();
+                    if (itemPickup != null)
+                    {
+                        PlayerMovement player = GetComponentInParent<PlayerMovement>();
+                        if (player == null)
+                            player = GetComponent<PlayerMovement>();
+                        
+                        if (player != null)
+                        {
+                            itemPickup.PickUp(player);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Selected: no se encontró PlayerMovement para recoger item");
+                        }
+                    }
+                }
             }
 
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.red);
@@ -38,8 +62,6 @@ public class Selected : MonoBehaviour
         {
             Deselect();
         }
-
-
     }
 
     void SelectedObject(Transform transform)
