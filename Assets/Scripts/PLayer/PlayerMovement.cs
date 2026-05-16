@@ -61,7 +61,7 @@ public class PlayerMovement : MonoBehaviour
     {
         //encontrar la slider de stamina en la escena
         //como tiene el script stamina bar , lo busca y lo asigna a la variable
-        staminaSlider = FindObjectOfType<StaminaBar>();
+        staminaSlider = FindFirstObjectByType<StaminaBar>();
 
         ConfigurarAudioPasos();
     }
