@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Cofre
+  - Puerta
   layers:
   - Default
   - TransparentFX

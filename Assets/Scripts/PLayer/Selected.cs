@@ -5,6 +5,9 @@ public class Selected : MonoBehaviour
     LayerMask mask;
     public float distancia = 15.0f;
 
+    [Header("Debug")]
+    public bool debugInteraccionPuertas = true;
+
     public Texture2D puntero;
     public GameObject TextDetect;
     GameObject ultimoReconocido = null;
@@ -22,14 +25,42 @@ public class Selected : MonoBehaviour
         {
             Deselect();
             SelectedObject(hit.transform);
-            if (hit.collider.tag == "Cofre")
+
+            if (hit.collider.CompareTag("Cofre"))
             {
                 if (Input.GetKeyDown(KeyCode.E))
                 {
-                    hit.collider.GetComponent<ChestController>().AbrirCofre();
-                    hit.collider.GetComponent<ChestController>().OnAfterAbrirCofre();
-                }
+                    ChestController chestController = hit.collider.GetComponentInParent<ChestController>();
+                    if (debugInteraccionPuertas)
+                    {
+                        Debug.Log("[Selected] E en Cofre -> hit=" + hit.collider.name + " | parent=" + hit.collider.transform.root.name + " | chestController=" + (chestController != null));
+                    }
 
+                    if (chestController != null)
+                    {
+                        chestController.AbrirCofre();
+                        chestController.OnAfterAbrirCofre();
+                    }
+                }
+            }
+            else
+            {
+                Door_Controller doorController = hit.collider.GetComponentInParent<Door_Controller>();
+                bool esPuerta = hit.collider.CompareTag("Puerta") || (doorController != null && doorController.CompareTag("Puerta"));
+
+                if (esPuerta && Input.GetKeyDown(KeyCode.E))
+                {
+                    if (debugInteraccionPuertas)
+                    {
+                        Debug.Log("[Selected] E en Puerta -> hit=" + hit.collider.name + " | tagHit=" + hit.collider.tag + " | doorController=" + (doorController != null) + " | objetoDoor=" + (doorController != null ? doorController.name : "null"));
+                    }
+
+                    if (doorController != null)
+                    {
+                        doorController.AbrirCofre();
+                        doorController.OnAfterAbrirCofre();
+                    }
+                }
             }
 
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.red);
