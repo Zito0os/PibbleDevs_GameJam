@@ -53,7 +53,7 @@ public class StaminaBar : MonoBehaviour
         else
         {
             Debug.Log("No hay stamina");
-            FindObjectOfType<PlayerMovement>().isSprinting = false;
+            FindFirstObjectByType<PlayerMovement>().isSprinting = false;
         }
     }
 
@@ -111,7 +111,7 @@ public class StaminaBar : MonoBehaviour
 
         myCoroutineLosing = null;
         //este script es el que maneja lo de correr accedemos el que tiene ese archivo para que deje de correr
-        FindObjectOfType<PlayerMovement>().isSprinting = false;
+        FindFirstObjectByType<PlayerMovement>().isSprinting = false;
         //Iniciar regeneración automática cuando se agota la stamina
         if (myCoroutineRegenerate != null)
         {

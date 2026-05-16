@@ -11,6 +11,8 @@ public class Door_Controller : MonoBehaviour
 
     private Transform doorPivot;
 
+    public int Tipo_de_puerta = 0; // 0: normal, 1: plata, 2: oro
+
     private const string ParamAbriendoPuerta = "abriendo_puerta";
     private const string ParamPuertaAbierta = "puerta_abierta";
     private const string ParamCerrandoPuerta = "cerrando_puerta";
