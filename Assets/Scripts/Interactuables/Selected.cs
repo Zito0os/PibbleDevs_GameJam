@@ -62,10 +62,13 @@ public class Selected : MonoBehaviour
 
                 if (esPuerta && Input.GetKeyDown(KeyCode.E))
                 {
+                    PlayerMovement player = GetComponentInParent<PlayerMovement>();
+                    if (player == null)
+                        player = GetComponent<PlayerMovement>();
 
                     if (doorController != null)
                     {
-                        doorController.AbrirCofre();
+                        doorController.AbrirCofre(player);
                         doorController.OnAfterAbrirCofre();
                     }
                 }

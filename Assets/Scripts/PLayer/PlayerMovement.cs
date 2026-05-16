@@ -43,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
     public float staminaUseAmount = 5f;
 
     private StaminaBar staminaSlider;
+    private Inventory inventory;
 
 
     //public Animator animator;
@@ -62,6 +63,12 @@ public class PlayerMovement : MonoBehaviour
         //encontrar la slider de stamina en la escena
         //como tiene el script stamina bar , lo busca y lo asigna a la variable
         staminaSlider = FindFirstObjectByType<StaminaBar>();
+        inventory = GetComponent<Inventory>();
+
+        if (inventory == null)
+        {
+            inventory = FindFirstObjectByType<Inventory>();
+        }
 
         ConfigurarAudioPasos();
     }
@@ -108,6 +115,9 @@ public class PlayerMovement : MonoBehaviour
 
         JunpCheck();
         RunCheck();
+        SelectInventorySlotCheck();
+        ScrollInventorySlotCheck();
+        UseItemCheck();
         ActualizarAudioPasos(estaMoviendose);
 
 
@@ -179,6 +189,60 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             sprintSpeed = 1;
+        }
+    }
+
+    private void UseItemCheck()
+    {
+        if (!Input.GetMouseButtonDown(0))
+            return;
+
+        if (inventory == null)
+            return;
+
+        if (!EsHechizoInventario(inventory.activeItemType))
+            return;
+
+        bool used = inventory.UseSelectedItem();
+        if (used)
+        {
+            Debug.Log($"PlayerMovement: item usado con click izquierdo desde slot {inventory.activeSlotIndex + 1}.");
+        }
+    }
+
+    private bool EsHechizoInventario(ItemType itemType)
+    {
+        return itemType == ItemType.SpellSlow
+            || itemType == ItemType.SpellFreeze
+            || itemType == ItemType.SpellClear;
+    }
+
+
+    private void SelectInventorySlotCheck()
+    {
+        if (inventory == null)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1)) inventory.SetActiveSlot(0);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) inventory.SetActiveSlot(1);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) inventory.SetActiveSlot(2);
+        if (Input.GetKeyDown(KeyCode.Alpha4)) inventory.SetActiveSlot(3);
+        if (Input.GetKeyDown(KeyCode.Alpha5)) inventory.SetActiveSlot(4);
+    }
+
+    private void ScrollInventorySlotCheck()
+    {
+        if (inventory == null)
+            return;
+
+        float scroll = Input.mouseScrollDelta.y;
+        if (scroll > 0f)
+        {
+            inventory.SetActiveSlot(inventory.activeSlotIndex - 1);
+        }
+        else if (scroll < 0f)
+        {
+            inventory.SetActiveSlot(inventory.activeSlotIndex + 1);
         }
     }
 
