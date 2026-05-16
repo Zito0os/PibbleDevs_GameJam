@@ -11,10 +11,13 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private Transform[] slotRoots = new Transform[5];
     public Vector3 selectedSlotScale = new Vector3(1.2f, 1.2f, 1f);
     [SerializeField] private TMP_Text inventoryMessageText;
+    [SerializeField] private TMP_Text puertaMessageText;
     [SerializeField] private float inventoryMessageDuration = 1.5f;
+    [SerializeField] private float puertaMessageDuration = 1.5f;
 
     private Inventory inventory;
     private Coroutine clearMessageRoutine;
+    private Coroutine clearDoorMessageRoutine;
     private Vector3[] baseSlotScales = new Vector3[5];
 
     private void Awake()
@@ -38,6 +41,7 @@ public class InventoryUI : MonoBehaviour
         BindSlotTexts();
         BindSlotRoots();
         BindMessageText();
+        BindDoorMessageText();
     }
 
     private void Start()
@@ -110,6 +114,21 @@ public class InventoryUI : MonoBehaviour
 
         if (inventoryMessageText == null)
             inventoryMessageText = FindTextInChildren(inventoryRoot, "Status_text");
+    }
+
+    private void BindDoorMessageText()
+    {
+        if (puertaMessageText != null)
+            return;
+
+        GameObject mainCanvas = GameObject.Find("MAIN_CANVA");
+        Transform searchRoot = mainCanvas != null ? mainCanvas.transform : inventoryRoot;
+        puertaMessageText = FindTextInChildren(searchRoot, "Puerta_txt");
+
+        if (puertaMessageText == null)
+        {
+            puertaMessageText = FindTextInChildren(inventoryRoot, "Puerta_txt");
+        }
     }
 
     private TMP_Text FindTextInChildren(Transform root, string targetName)
@@ -207,6 +226,30 @@ public class InventoryUI : MonoBehaviour
 
         inventoryMessageText.text = "Inventario lleno";
         clearMessageRoutine = StartCoroutine(ClearInventoryMessage());
+    }
+
+    public void SetDoorMessage(string message)
+    {
+        if (puertaMessageText == null)
+        {
+            Debug.LogWarning("InventoryUI: no se encontró Puerta_txt para mostrar mensajes de puerta.");
+            return;
+        }
+
+        if (clearDoorMessageRoutine != null)
+        {
+            StopCoroutine(clearDoorMessageRoutine);
+        }
+
+        puertaMessageText.text = message;
+        clearDoorMessageRoutine = StartCoroutine(ClearDoorMessage());
+    }
+
+    private IEnumerator ClearDoorMessage()
+    {
+        yield return new WaitForSeconds(puertaMessageDuration);
+        if (puertaMessageText != null)
+            puertaMessageText.text = string.Empty;
     }
 
     private IEnumerator ClearInventoryMessage()
