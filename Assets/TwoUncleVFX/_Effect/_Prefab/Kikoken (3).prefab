@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 9108291891796398002}
   - component: {fileID: 2487984751730294434}
   - component: {fileID: 7125041669116239252}
+  - component: {fileID: 7783483480836730774}
   m_Layer: 0
   m_Name: Kikoken (3)
   m_TagString: Untagged
@@ -319,7 +320,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7502850378401618596}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 411cffdc8f64b864da5d25a5a22ed2c0, type: 3}
   m_Name: 
@@ -330,3 +331,16 @@ MonoBehaviour:
   time: 1
   towardType: 1
   maxDistance: 100
+--- !u!114 &7783483480836730774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7502850378401618596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4205f5100b8176d41a57ffa2f9ee2499, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SingleHechizo
+  lifetime: 5
