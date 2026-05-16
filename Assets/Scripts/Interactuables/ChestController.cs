@@ -1,10 +1,14 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ChestController : MonoBehaviour
 {
     [Header("Animator")]
     public Animator animator;
+
+    [Header("Contents")]
+    [SerializeField] private List<ItemStack> contents = new List<ItemStack>();
 
     [Header("State flags (runtime)")]
     public bool CofreAbierto = false;
@@ -12,6 +16,16 @@ public class ChestController : MonoBehaviour
     public bool Interactuado = false;
 
     private bool isRunningSequence = false;
+
+    private void Start()
+    {
+        // Inicializar contenido de prueba si no hay nada
+        if (contents.Count == 0)
+        {
+            contents.Add(new ItemStack(ItemType.KeySilver, 1));
+            contents.Add(new ItemStack(ItemType.SpellSlow, 2));
+        }
+    }
 
     // Called by Selected.cs when player presses E
     public void AbrirCofre()
@@ -52,6 +66,31 @@ public class ChestController : MonoBehaviour
         if (!isRunningSequence)
             StartCoroutine(CloseSequence());
     }
+
+    // Transfer items from chest to player inventory
+    public void TransferItemsToPlayer(PlayerMovement player)
+    {
+        Inventory inventory = player.GetComponent<Inventory>();
+        if (inventory == null)
+        {
+            Debug.LogWarning("ChestController: jugador sin Inventory");
+            return;
+        }
+
+        foreach (ItemStack stack in contents)
+        {
+            bool added = inventory.AddItem(stack.itemType, stack.quantity);
+            if (added)
+            {
+                Debug.Log($"ChestController: {stack} transferido al inventario del jugador.");
+            }
+        }
+
+        contents.Clear();
+    }
+
+    // Get chest contents (for UI or inspection)
+    public IReadOnlyList<ItemStack> GetContents() => contents;
 
     private IEnumerator OpenSequence()
     {

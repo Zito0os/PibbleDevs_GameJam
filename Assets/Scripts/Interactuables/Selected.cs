@@ -5,9 +5,6 @@ public class Selected : MonoBehaviour
     LayerMask mask;
     public float distancia = 15.0f;
 
-    [Header("Debug")]
-    public bool debugInteraccionPuertas = true;
-
     public Texture2D puntero;
     public GameObject TextDetect;
     GameObject ultimoReconocido = null;
@@ -25,35 +22,46 @@ public class Selected : MonoBehaviour
         {
             Deselect();
             SelectedObject(hit.transform);
-
-            if (hit.collider.CompareTag("Cofre"))
+            
+            // Check for chest interaction
+            if (hit.collider.tag == "Cofre")
             {
                 if (Input.GetKeyDown(KeyCode.E))
                 {
-                    ChestController chestController = hit.collider.GetComponentInParent<ChestController>();
-                    if (debugInteraccionPuertas)
+                    hit.collider.GetComponent<ChestController>().AbrirCofre();
+                    hit.collider.GetComponent<ChestController>().OnAfterAbrirCofre();
+                }
+            }
+            // Check for item pickup
+            else if (hit.collider.tag == "Item")
+            {
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    ItemPickup itemPickup = hit.collider.GetComponent<ItemPickup>();
+                    if (itemPickup != null)
                     {
-                        Debug.Log("[Selected] E en Cofre -> hit=" + hit.collider.name + " | parent=" + hit.collider.transform.root.name + " | chestController=" + (chestController != null));
-                    }
-
-                    if (chestController != null)
-                    {
-                        chestController.AbrirCofre();
-                        chestController.OnAfterAbrirCofre();
+                        PlayerMovement player = GetComponentInParent<PlayerMovement>();
+                        if (player == null)
+                            player = GetComponent<PlayerMovement>();
+                        
+                        if (player != null)
+                        {
+                            itemPickup.PickUp(player);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Selected: no se encontró PlayerMovement para recoger item");
+                        }
                     }
                 }
             }
-            else
+            else if (hit.collider.tag == "Puerta")
             {
                 Door_Controller doorController = hit.collider.GetComponentInParent<Door_Controller>();
                 bool esPuerta = hit.collider.CompareTag("Puerta") || (doorController != null && doorController.CompareTag("Puerta"));
 
                 if (esPuerta && Input.GetKeyDown(KeyCode.E))
                 {
-                    if (debugInteraccionPuertas)
-                    {
-                        Debug.Log("[Selected] E en Puerta -> hit=" + hit.collider.name + " | tagHit=" + hit.collider.tag + " | doorController=" + (doorController != null) + " | objetoDoor=" + (doorController != null ? doorController.name : "null"));
-                    }
 
                     if (doorController != null)
                     {
@@ -69,8 +77,6 @@ public class Selected : MonoBehaviour
         {
             Deselect();
         }
-
-
     }
 
     void SelectedObject(Transform transform)
