@@ -1,0 +1,858 @@
+# ============================================================
+# CASTLE OF SELF — CONTEXTO COMPLETO DEL PROYECTO
+# Para: GitHub Copilot / Copilot Chat
+# Motor: Unity 2022 LTS | Lenguaje: C# | Vista: Top-down 3D
+# Equipo: Programador A (World & Systems), Programador B (Player & Items), Artista (HUD & UI)
+# ROL ACTIVO EN ESTA SESIÓN: PROGRAMADOR B
+# ============================================================
+# INSTRUCCIÓN PARA COPILOT:
+# Este archivo es el documento de arquitectura completo del juego Castle of Self.
+# Úsalo como contexto permanente para todas las sugerencias de código.
+# Cuando generes código, respeta los nombres exactos de scripts, eventos,
+# enums, interfaces y patrones definidos aquí. El usuario es el Programador B,
+# por lo que tu prioridad es ayudarlo con los sistemas de Player, Items,
+# Inventario, Hechizos y HUD. Sin embargo, debes conocer TODO el proyecto
+# para que las sugerencias sean compatibles con el trabajo de los demás.
+# ============================================================
+
+
+## ══════════════════════════════════════════════════════════
+## 1. VISIÓN GENERAL DEL JUEGO
+## ══════════════════════════════════════════════════════════
+
+Castle of Self es un juego de exploración competitiva para 2 jugadores en tiempo real
+ambientado en un castillo mágico. La narrativa: un personaje con baja autoestima
+encuentra un papel con un número de teléfono. Al llamarlo, aparece un mago que lo
+teletransporta a su castillo junto con un CLON de sí mismo. El mago les dice que si el
+jugador derrota a su clon (escapa del castillo primero), eliminará todos sus defectos.
+
+OBJETIVO DEL JUEGO:
+Ser el primero en encontrar y abrir exitosamente la puerta dorada CORRECTA del castillo.
+Hay varias puertas doradas, pero solo UNA es la salida real (determinada aleatoriamente
+al inicio de la partida). Abrir la puerta incorrecta rompe la llave dorada.
+
+PLATAFORMA: PC
+CONTROLES: Teclado + Mouse para el jugador humano. El clon es controlado por IA.
+LENGUAJE: C# en Unity 2022 LTS
+REPOSITORIO: GitHub con ramas por miembro del equipo
+
+
+## ══════════════════════════════════════════════════════════
+## 2. MECÁNICAS COMPLETAS DEL JUEGO
+## ══════════════════════════════════════════════════════════
+
+### 2.1 MOVIMIENTO
+- WASD para moverse por el castillo
+- Shift para correr más rápido (consume stamina)
+- Si la stamina llega a 0, el jugador camina más lento hasta que se recargue parcialmente
+- La stamina se recarga automáticamente cuando no se corre
+- Los hechizos enemigos pueden modificar la velocidad del jugador (slow, freeze)
+
+### 2.2 ITEMS — SISTEMA COMPLETO
+
+Todos los items se obtienen abriendo cofres. Los cofres están distribuidos por los
+cuartos del castillo. Al abrir un cofre, aparece un item aleatorio del pool global.
+
+TIPOS DE ITEM:
+
+  [A] LLAVE PLATEADA
+      - Sirve para abrir PUERTAS PLATEADAS
+      - Las puertas plateadas permiten avanzar a nuevas zonas del castillo
+      - Para usarla: acercarse a puerta plateada + tener llave en inventario + pasar el skill check
+      - Si el skill check FALLA: la llave desaparece del inventario y reaparece en cofre random
+
+  [B] LLAVE DORADA
+      - Sirve para intentar abrir PUERTAS DORADAS
+      - Solo UNA puerta dorada es la ganadora (flag isWinDoor asignado por GameManager al inicio)
+      - Si se abre la puerta CORRECTA: el jugador GANA la partida
+      - Si se abre una puerta INCORRECTA: la llave se rompe y reaparece en cofre random
+      - Cuando un jugador TIENE una llave dorada: aparece alerta en minimapa del rival
+
+  [C] HECHIZO DE RALENTIZACIÓN (Slow)
+      - Se lanza con Q apuntando con el mouse
+      - Si impacta al rival: reduce su velocidad de movimiento un 30% durante N segundos
+      - Rareza: común
+
+  [D] HECHIZO DE CONGELACIÓN (Freeze)
+      - Se lanza con Q apuntando con el mouse
+      - Si impacta al rival: paraliza COMPLETAMENTE su movimiento durante 3 segundos
+      - Rareza: poco común
+
+  [E] HECHIZO DE ELIMINAR ITEMS (ClearInventory)
+      - Se lanza con Q apuntando con el mouse
+      - Si impacta al rival: VACÍA TODO su inventario (llaves + hechizos)
+      - Todos los items vaciados reaparecen en cofres aleatorios del mapa
+      - Rareza: raro (el más difícil de encontrar)
+
+  [F] HECHIZO DE ROBAR LLAVE (StealKey)
+      - Se lanza con Q apuntando con el mouse
+      - Si impacta al rival: extrae UNA llave aleatoria de su inventario
+      - La llave robada reaparece en un cofre aleatorio del mapa
+      - Rareza: poco común
+
+### 2.3 MECÁNICA DE SKILL CHECK (ruleta)
+
+Cuando el jugador intenta abrir una puerta (plateada o dorada) con la llave correcta:
+  1. Aparece un overlay en pantalla: un círculo con una flecha rotatoria tipo "ruleta"
+  2. En el círculo hay una pequeña zona de color verde (tamaño y posición aleatorios)
+  3. El jugador debe hacer clic cuando la flecha apunta a la zona verde
+  4. Si acierta: la acción de la puerta se ejecuta (abrir / ganar)
+  5. Si falla: la llave desaparece del inventario y reaparece en cofre random
+
+### 2.4 COFRES Y RESPAWN DE ITEMS
+
+- Los cofres están distribuidos en los cuartos del castillo (posición fija, definida por Prog A)
+- Al abrir un cofre, este entra en un estado de "vacío" con cooldown
+- Cuando un item es destruido/perdido, el ItemSpawner lo reasigna a un cofre aleatorio disponible
+- El cofre que recibe el item vuelve a estar disponible para ser abierto
+
+### 2.5 MINIMAPA Y ALERTA DE LLAVE DORADA
+
+- El minimapa muestra posición de ambos jugadores en tiempo real
+- Cuando el RIVAL porta una llave dorada:
+  - Aparece un ícono especial sobre su punto en el minimapa
+  - Aparece un texto de alerta en el HUD del jugador local ("¡El rival tiene una llave dorada!")
+- Cuando el rival pierde la llave dorada: las alertas desaparecen
+
+### 2.6 CONDICIÓN DE VICTORIA Y DERROTA
+
+- VICTORIA: el jugador abre la puerta dorada correcta con skill check exitoso
+- DERROTA: el clon rival abre la puerta dorada correcta antes que el jugador
+- Al detectarse la victoria/derrota: GameManager carga la escena Result
+
+
+## ══════════════════════════════════════════════════════════
+## 3. ESCENAS DE UNITY (3 ESCENAS TOTALES)
+## ══════════════════════════════════════════════════════════
+
+### ESCENA 1 — MainMenu
+Responsable: Prog A + Artista
+Contenido:
+  - Canvas > Panel_MainMenu > Btn_Play, Btn_Credits, Btn_Quit
+  - Canvas > Panel_Credits
+  - CinematicPlayer (Timeline o Animator para la intro)
+  - AudioManager (prefab, DontDestroyOnLoad)
+Scripts en esta escena:
+  - MainMenuManager.cs (Prog A) — botones, cargar escena Game
+  - CinematicController.cs (Prog A conecta, Artista entrega animación) — skip con tecla
+
+
+### ESCENA 2 — Game (ESCENA PRINCIPAL)
+Responsable: Prog A (integración), Prog B (player + items), Artista (HUD visual)
+Jerarquía completa de GameObjects:
+
+  [MANAGERS]
+  - GameManager          (singleton, Prog A)
+  - EventManager         (singleton estático, Prog A)
+  - AudioManager         (prefab, DontDestroyOnLoad, Prog A)
+  - MinimapController    (Prog A)
+
+  [WORLD]
+  - CastleMap            (GameObject padre vacío)
+    - Room_01 ... Room_N   (prefabs de cuarto, Prog A)
+    - DoorSilver_01 ... N  (prefabs de puerta plateada, Prog A)
+    - DoorGold_01 ... N    (prefabs de puerta dorada, Prog A)
+    - Chest_01 ... N       (prefabs de cofre, Prog B crea ChestController)
+
+  [PLAYERS]
+  - Player1              (prefab, Prog B)
+  - Player2_Clone        (prefab base de Prog B + CloneAI.cs de Prog A)
+
+  [HUD - Canvas]
+  - HUD_Player1
+    - StaminaBar         (Image con fillAmount)
+    - ItemBar            (6 slots con Image de ícono)
+    - GoldenKeyAlert     (Text, oculto por defecto)
+  - HUD_Player2          (igual que HUD_Player1)
+  - Minimap_Panel        (Prog A)
+  - SkillCheck_Overlay   (Prog A — se activa cuando el jugador usa una llave)
+  - WinLose_Panel        (oculto hasta fin de partida)
+
+
+### ESCENA 3 — Result
+Responsable: Prog A + Artista
+Contenido:
+  - Canvas > Panel_Win  (imagen de victoria, Artista)
+  - Canvas > Panel_Lose (imagen de derrota, Artista)
+  - Btn_Retry, Btn_MainMenu
+Scripts en esta escena:
+  - ResultManager.cs (Prog A) — lee GameManager.result (static) y muestra panel correcto
+
+
+## ══════════════════════════════════════════════════════════
+## 4. SISTEMA DE EVENTOS — EventManager.cs
+## ══════════════════════════════════════════════════════════
+
+EventManager.cs es creado y mantenido por Prog A. Es un singleton estático con eventos
+System.Action. NADIE modifica EventManager.cs excepto Prog A.
+Prog B solo se suscribe y dispara eventos desde sus propios scripts.
+
+DECLARACIÓN COMPLETA DEL EVENTMANAGER:
+
+  public static class EventManager
+  {
+      // ── Juego ──────────────────────────────────────────────
+      public static Action OnGameStarted;
+      public static Action<PlayerController> OnGameWon;
+      public static Action OnGameOver;
+
+      // ── Puertas ────────────────────────────────────────────
+      public static Action<DoorController> OnDoorUnlocked;
+      public static Action OnSkillCheckPassed;
+      public static Action OnSkillCheckFailed;
+      public static Action<PlayerController> OnWrongGoldDoor;
+
+      // ── Items y cofres ─────────────────────────────────────
+      public static Action<ItemData, Vector3> OnChestOpened;
+      public static Action<ItemData, ChestController> OnItemRespawned;
+      public static Action<PlayerController> OnInventoryChanged;
+
+      // ── Stamina ────────────────────────────────────────────
+      public static Action<float> OnStaminaChanged;   // valor: 0.0f a 1.0f
+
+      // ── Hechizos ───────────────────────────────────────────
+      public static Action<SpellItem, PlayerController> OnSpellCast;
+      public static Action<SpellItem, PlayerController> OnSpellHit;
+
+      // ── Llave dorada (Prog B dispara, Prog A escucha en minimapa) ──
+      public static Action<PlayerController> OnGoldenKeyPickedUp;
+      public static Action<PlayerController> OnGoldenKeyLost;
+
+      // ── Interacción ────────────────────────────────────────
+      public static Action<IInteractable> OnPlayerInteract;
+  }
+
+PATRÓN DE SUSCRIPCIÓN CORRECTO (siempre desuscribirse en OnDisable):
+
+  void OnEnable()
+  {
+      EventManager.OnInventoryChanged += RefreshUI;
+      EventManager.OnSkillCheckFailed += HandleKeyLost;
+  }
+
+  void OnDisable()
+  {
+      EventManager.OnInventoryChanged -= RefreshUI;
+      EventManager.OnSkillCheckFailed -= HandleKeyLost;
+  }
+
+PATRÓN DE DISPARO DE EVENTO:
+
+  EventManager.OnInventoryChanged?.Invoke(playerController);
+
+
+## ══════════════════════════════════════════════════════════
+## 5. SCRIPTABLEOBJECTS BASE (creados por Prog A en Fase 0)
+## ══════════════════════════════════════════════════════════
+
+Prog B REFERENCIA estos ScriptableObjects pero NO los crea.
+Están en /Assets/ScriptableObjects/
+
+  // Item.cs — ScriptableObject base
+  public abstract class Item : ScriptableObject
+  {
+      public string itemName;
+      public Sprite icon;
+      public ItemType type;  // enum: Key, Spell
+  }
+
+  // KeyItem.cs — hereda de Item
+  public class KeyItem : Item
+  {
+      public KeyType keyType;  // enum: Silver, Gold
+  }
+
+  // SpellItem.cs — hereda de Item
+  public class SpellItem : Item
+  {
+      public SpellType spellType;   // enum: Slow, Freeze, ClearInventory, StealKey
+      public float duration;        // duración del efecto en segundos
+      public float slowAmount;      // solo para Slow (ej: 0.3f = 30% de reducción)
+  }
+
+  // ItemPool.cs — ScriptableObject con lista global de items y pesos de probabilidad
+  public class ItemPool : ScriptableObject
+  {
+      public List<ItemEntry> entries;
+
+      [System.Serializable]
+      public class ItemEntry
+      {
+          public Item item;
+          public float weight;  // peso de probabilidad (ej: llave plateada = 10, hechizo clear = 1)
+      }
+  }
+
+ENUMS DEL PROYECTO (definidos por Prog A, usados por todos):
+
+  public enum ItemType    { Key, Spell }
+  public enum KeyType     { Silver, Gold }
+  public enum SpellType   { Slow, Freeze, ClearInventory, StealKey }
+  public enum DoorType    { Silver, Gold }
+  public enum GameState   { Waiting, Playing, Paused, GameOver }
+
+
+## ══════════════════════════════════════════════════════════
+## 6. PREFABS DEL PROYECTO
+## ══════════════════════════════════════════════════════════
+
+Ubicación: /Assets/Prefabs/
+
+  Player.prefab
+    Componentes: PlayerController, StaminaSystem, PlayerInteraction,
+                 Inventory, SpellLauncher, Rigidbody, CapsuleCollider, Animator
+    Creado por: Prog B
+    Instanciado por: GameManager al inicio de la partida
+
+  Clone.prefab
+    Igual que Player.prefab + CloneAI.cs (Prog A agrega la IA encima)
+    Prog B construye la base, Prog A agrega CloneAI.cs
+
+  DoorSilver.prefab
+    Componentes: DoorController, BoxCollider (trigger), Animator
+    isGold = false
+    Creado y ubicado por: Prog A
+
+  DoorGold.prefab
+    Componentes: DoorController (isGold=true, isWinDoor asignado por GameManager), Animator
+    Creado y ubicado por: Prog A
+
+  Chest.prefab
+    Componentes: ChestController, BoxCollider (trigger), Animator
+    Prog B crea ChestController. Prog A ubica los cofres en los cuartos.
+
+  SpellProjectile.prefab
+    Componentes: SpellProjectile, Rigidbody2D, CircleCollider2D (isTrigger=true),
+                 SpriteRenderer o TrailRenderer
+    Creado por: Prog B
+
+  AudioManager.prefab
+    Componentes: AudioManager.cs, múltiples AudioSource
+    DontDestroyOnLoad. Creado por: Prog A
+
+  SkillCheck_Overlay.prefab
+    Componentes: Canvas (modo Overlay), SkillCheckController.cs,
+                 Image (círculo), Image (flecha rotatoria)
+    Creado por: Prog A. Activado por DoorController cuando el jugador intenta abrir puerta.
+
+
+## ══════════════════════════════════════════════════════════
+## 7. TODOS LOS SCRIPTS DEL PROYECTO
+## ══════════════════════════════════════════════════════════
+
+### 7A — SCRIPTS DE PROG A (World & Systems)
+Estos scripts son creados y mantenidos por Prog A.
+Prog B NO toca estos archivos. Solo los conoce para integrarse con sus eventos.
+
+  GameManager.cs
+    - Singleton con estado global (enum GameState)
+    - Al Awake(): elige una DoorGold aleatoria y le asigna isWinDoor = true
+    - Guarda referencia a ambos PlayerControllers
+    - Suscrito a OnGameWon: carga escena Result via SceneLoader
+    - Variable estática: public static PlayerController winner
+
+  EventManager.cs
+    - Singleton estático puro (sin MonoBehaviour)
+    - Declara todos los System.Action del proyecto (ver sección 4)
+    - NO se instancia, se accede directamente: EventManager.OnSpellHit?.Invoke(...)
+
+  SceneLoader.cs
+    - Wrapper de SceneManager con fade in/out
+    - Métodos: LoadScene(string name), ReloadCurrentScene()
+
+  FadeController.cs
+    - Controla un Canvas negro con Image que hace fade
+    - Llamado por SceneLoader
+
+  CastleGenerator.cs
+    - Instancia prefabs de cuartos al inicio (Room_Small, Room_Large según RoomData SO)
+    - Conecta puertas entre cuartos
+    - Llena la lista de cofres en ItemSpawner (via referencia directa o evento)
+    - Al terminar de generar: llama EventManager.OnGameStarted?.Invoke()
+
+  DoorController.cs
+    - Implementa IInteractable
+    - Variables: DoorType doorType, bool isWinDoor, bool isLocked
+    - void Interact(PlayerController player):
+        Verifica que player tenga la llave correcta en Inventory
+        Activa SkillCheck_Overlay
+    - Suscrito a OnSkillCheckPassed: ejecuta acción de la puerta
+        Si Silver: isLocked = false, abrir animación, OnDoorUnlocked
+        Si Gold y isWinDoor: OnGameWon(player)
+        Si Gold y !isWinDoor: OnWrongGoldDoor(player)
+    - Suscrito a OnSkillCheckFailed: no hace nada (Inventory ya maneja la llave)
+
+  SkillCheckController.cs
+    - Controla la ruleta del overlay
+    - Al activarse: genera zona verde random (tamaño y ángulo)
+    - Rota la flecha a velocidad constante
+    - Al clic del jugador: comprueba si la flecha está en zona verde
+        Éxito: OnSkillCheckPassed?.Invoke()
+        Fallo: OnSkillCheckFailed?.Invoke()
+    - Se desactiva después del resultado
+
+  MinimapController.cs
+    - Actualiza posición de iconos de jugadores en el minimapa cada frame
+    - Suscrito a OnGoldenKeyPickedUp(player): muestra ícono de alerta sobre el rival
+    - Suscrito a OnGoldenKeyLost(player): oculta el ícono de alerta
+
+  CloneAI.cs
+    - Adjunto al Clone.prefab (encima de PlayerController)
+    - Pathfinding simple: explora cuartos, busca cofres, recoge items
+    - Si tiene llave: busca la puerta correspondiente e intenta abrirla
+    - Si tiene hechizo: lanza hacia el jugador humano si está en rango
+    - Usa los mismos métodos de PlayerController que el jugador humano
+
+  RoomData.cs (ScriptableObject)
+    - int chestCount (cantidad de cofres en el cuarto)
+    - DoorType[] doors (qué puertas tiene el cuarto)
+
+  AudioManager.cs
+    - Singleton con métodos: PlaySFX(string name), PlayMusic(string name), StopMusic()
+    - DontDestroyOnLoad
+
+  MainMenuManager.cs
+    - Botones: Jugar (SceneLoader.LoadScene("Game")), Créditos, Salir
+    - Inicia CinematicController al cargar la escena
+
+  CinematicController.cs
+    - Reproduce Timeline o Animator de la intro
+    - Al presionar tecla configurada: skip
+    - Al terminar: dispara OnCinematicEnd (local) → activa menú principal
+
+  ResultManager.cs
+    - Lee GameManager.winner para saber quién ganó
+    - Activa el panel correcto (Win o Lose)
+    - Btn_Retry: SceneLoader.ReloadCurrentScene() cargando "Game"
+    - Btn_MainMenu: SceneLoader.LoadScene("MainMenu")
+
+
+### 7B — SCRIPTS DE PROG B (Player & Items) ← ROL ACTIVO
+Estos son los scripts que el usuario (Programador B) debe desarrollar.
+
+  PlayerController.cs
+    Namespace: CastleOfSelf.Player
+    Responsabilidad: movimiento del jugador, integración con stamina, flag de input
+    Variables clave:
+      [SerializeField] float moveSpeed = 4f;
+      [SerializeField] float sprintMultiplier = 1.8f;
+      bool inputEnabled = true;      // FreezeEffect lo pone en false
+      bool isSprinting = false;
+      Rigidbody rb;
+      StaminaSystem staminaSystem;
+    Métodos:
+      void Update():
+        if (!inputEnabled) return;
+        Leer Input.GetAxisRaw("Horizontal") y "Vertical"
+        Detectar Input.GetKey(KeyCode.LeftShift) && staminaSystem.HasStamina()
+        Aplicar velocidad: rb.linearVelocity = direction * moveSpeed * (isSprinting ? sprintMultiplier : 1f)
+      void SetInputEnabled(bool value): usado por FreezeEffect
+      void ApplySpeedModifier(float multiplier, float duration): usado por SlowEffect (Coroutine)
+
+  StaminaSystem.cs
+    Namespace: CastleOfSelf.Player
+    Responsabilidad: gestionar la barra de stamina
+    Variables clave:
+      [SerializeField] float maxStamina = 100f;
+      [SerializeField] float drainRate = 20f;     // por segundo corriendo
+      [SerializeField] float rechargeRate = 15f;  // por segundo en reposo
+      [SerializeField] float exhaustedThreshold = 20f; // stamina mínima para volver a correr
+      float currentStamina;
+      bool isExhausted;
+    Métodos:
+      bool HasStamina(): retorna currentStamina > 0 && !isExhausted
+      void Drain(): currentStamina -= drainRate * Time.deltaTime; verificar exhaustion
+      void Recharge(): currentStamina += rechargeRate * Time.deltaTime
+      Al cambiar currentStamina: EventManager.OnStaminaChanged?.Invoke(currentStamina / maxStamina)
+
+  PlayerInteraction.cs
+    Namespace: CastleOfSelf.Player
+    Responsabilidad: detectar IInteractable en rango y activar con tecla E
+    Variables clave:
+      IInteractable currentInteractable;
+      PlayerController playerController;
+    Lógica:
+      OnTriggerEnter: si el objeto tiene IInteractable, guardarlo en currentInteractable
+      OnTriggerExit: limpiar currentInteractable
+      Update(): si Input.GetKeyDown(KeyCode.E) && currentInteractable != null:
+        currentInteractable.Interact(playerController)
+        EventManager.OnPlayerInteract?.Invoke(currentInteractable)
+
+  IInteractable.cs (interfaz)
+    Namespace: CastleOfSelf
+    public interface IInteractable
+    {
+        void Interact(PlayerController player);
+    }
+    Implementado por: ChestController (Prog B), DoorController (Prog A)
+
+  Inventory.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: lista de items del jugador
+    Variables clave:
+      [SerializeField] int maxSlots = 6;
+      List<Item> items = new List<Item>();
+      PlayerController owner;
+      ItemSpawner itemSpawner;  // referencia, asignada por GameManager o Inspector
+    Métodos:
+      bool AddItem(Item item):
+        Si items.Count >= maxSlots: retornar false
+        items.Add(item)
+        Si item es KeyItem con keyType == Gold: OnGoldenKeyPickedUp?.Invoke(owner)
+        OnInventoryChanged?.Invoke(owner)
+        retornar true
+      void RemoveItem(Item item):
+        items.Remove(item)
+        Si item era KeyItem Gold: OnGoldenKeyLost?.Invoke(owner)
+        OnInventoryChanged?.Invoke(owner)
+      void ClearAll():
+        Por cada item en items: itemSpawner.RespawnItem(item)
+        items.Clear()
+        OnInventoryChanged?.Invoke(owner)
+      bool HasKey(KeyType type): retorna items.OfType<KeyItem>().Any(k => k.keyType == type)
+      KeyItem GetRandomKey(): retorna items.OfType<KeyItem>().OrderBy(_ => Random.value).FirstOrDefault()
+      List<Item> GetAllItems(): retorna copia de la lista
+
+  HUDController.cs
+    Namespace: CastleOfSelf.UI
+    Responsabilidad: actualizar visualmente el HUD (inventario, stamina, alertas)
+    Variables clave:
+      [SerializeField] Image[] itemSlots;      // 6 Image para los slots del inventario
+      [SerializeField] Image staminaBarFill;   // Image con fillAmount
+      [SerializeField] GameObject goldenKeyAlert; // texto de alerta, oculto por defecto
+      [SerializeField] PlayerController trackedPlayer; // el jugador que este HUD muestra
+      [SerializeField] PlayerController rivalPlayer;   // el rival (para alertas)
+      Sprite emptySlotSprite;  // sprite transparente para slots vacíos
+    Suscripciones en OnEnable:
+      EventManager.OnInventoryChanged += OnInventoryChanged
+      EventManager.OnStaminaChanged += OnStaminaChanged
+      EventManager.OnGoldenKeyPickedUp += OnRivalGoldenKey
+      EventManager.OnGoldenKeyLost += OnRivalLostKey
+    Métodos:
+      void OnInventoryChanged(PlayerController player):
+        Si player != trackedPlayer: ignorar
+        Iterar itemSlots[], asignar sprite del item o emptySlotSprite
+      void OnStaminaChanged(float ratio):
+        staminaBarFill.fillAmount = ratio
+      void OnRivalGoldenKey(PlayerController player):
+        Si player == rivalPlayer: goldenKeyAlert.SetActive(true)
+      void OnRivalLostKey(PlayerController player):
+        Si player == rivalPlayer: goldenKeyAlert.SetActive(false)
+
+  ChestController.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: lógica del cofre al ser abierto
+    Implementa: IInteractable
+    Variables clave:
+      bool isOpen = false;
+      bool hasItem = false;
+      Item storedItem = null;
+      [SerializeField] float reopenCooldown = 5f;
+      Animator animator;
+      ItemSpawner itemSpawner;
+    Métodos:
+      void Interact(PlayerController player):
+        Si isOpen || !hasItem: return
+        isOpen = true
+        animator.SetTrigger("Open")
+        player.GetComponent<Inventory>().AddItem(storedItem)
+        EventManager.OnChestOpened?.Invoke(storedItem, transform.position)
+        storedItem = null
+        hasItem = false
+        StartCoroutine(ReopenCooldown())
+      IEnumerator ReopenCooldown():
+        yield return new WaitForSeconds(reopenCooldown)
+        isOpen = false
+        animator.SetTrigger("Close")
+      void ReceiveItem(Item item):
+        storedItem = item
+        hasItem = true
+        // Activar efecto visual de "cofre listo"
+
+  ItemSpawner.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: pool global de items, reasignar items a cofres aleatorios
+    Variables clave:
+      [SerializeField] ItemPool itemPool;
+      List<ChestController> allChests;   // llenada por CastleGenerator (Prog A)
+    Métodos (llamados por CastleGenerator de Prog A para inicializar):
+      void RegisterChest(ChestController chest): allChests.Add(chest)
+    Métodos de uso:
+      Item GetRandomItem():
+        Usa los pesos del ItemPool para elegir item aleatoriamente (método de ruleta)
+        Retorna una instancia (ScriptableObject.Instantiate o referencia directa)
+      void RespawnItem(Item item):
+        StartCoroutine(RespawnCoroutine(item))
+      IEnumerator RespawnCoroutine(Item item):
+        yield return new WaitForSeconds(0.5f)  // pequeño delay
+        ChestController target = allChests
+          .Where(c => !c.hasItem && !c.isOpen)
+          .OrderBy(_ => Random.value)
+          .FirstOrDefault()
+        Si target != null:
+          target.ReceiveItem(item)
+          EventManager.OnItemRespawned?.Invoke(item, target)
+    Suscripciones en OnEnable:
+      EventManager.OnSkillCheckFailed += () => { /* la llave ya fue removida del inventario por DoorController antes de este evento */ }
+      EventManager.OnWrongGoldDoor += (player) => { /* igual, DoorController ya removió la llave */ }
+    NOTA: ItemSpawner no necesita suscribirse a OnSkillCheckFailed para hacer respawn.
+    DoorController (Prog A) llama a player.GetComponent<Inventory>().RemoveItem(key)
+    antes de disparar el evento, y Inventory.RemoveItem internamente llama RespawnItem.
+
+  SpellLauncher.cs
+    Namespace: CastleOfSelf.Player
+    Responsabilidad: instanciar proyectil de hechizo en dirección del mouse
+    Variables clave:
+      [SerializeField] GameObject spellProjectilePrefab;
+      Inventory inventory;
+      PlayerController playerController;
+    Métodos:
+      void Update():
+        Si Input.GetKeyDown(KeyCode.Q):
+          SpellItem spell = inventory.GetAllItems().OfType<SpellItem>().FirstOrDefault()
+          Si spell == null: return
+          inventory.RemoveItem(spell)
+          Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition)
+          mousePos.z = transform.position.z
+          Vector3 direction = (mousePos - transform.position).normalized
+          GameObject proj = Instantiate(spellProjectilePrefab, transform.position, Quaternion.identity)
+          SpellProjectile sp = proj.GetComponent<SpellProjectile>()
+          sp.Initialize(spell, direction, playerController)
+          EventManager.OnSpellCast?.Invoke(spell, playerController)
+
+  SpellProjectile.cs
+    Namespace: CastleOfSelf.Player
+    Responsabilidad: mover el proyectil y detectar impacto con el rival
+    Variables clave:
+      [SerializeField] float speed = 8f;
+      [SerializeField] float lifetime = 4f;
+      SpellItem spellData;
+      Vector3 direction;
+      PlayerController owner;
+    Métodos:
+      void Initialize(SpellItem spell, Vector3 dir, PlayerController ownerPlayer):
+        spellData = spell; direction = dir; owner = ownerPlayer
+        Destroy(gameObject, lifetime)
+      void Update(): transform.position += direction * speed * Time.deltaTime
+      void OnTriggerEnter(Collider other):
+        PlayerController target = other.GetComponent<PlayerController>()
+        Si target == null || target == owner: return
+        EventManager.OnSpellHit?.Invoke(spellData, target)
+        Destroy(gameObject)
+
+  SlowEffect.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: aplicar reducción de velocidad al objetivo
+    Suscrito a: EventManager.OnSpellHit
+    Lógica:
+      void HandleSpellHit(SpellItem spell, PlayerController target):
+        Si spell.spellType != SpellType.Slow: return
+        StartCoroutine(ApplySlow(spell, target))
+      IEnumerator ApplySlow(SpellItem spell, PlayerController target):
+        float original = target.moveSpeed
+        target.moveSpeed *= (1f - spell.slowAmount)
+        yield return new WaitForSeconds(spell.duration)
+        target.moveSpeed = original
+
+  FreezeEffect.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: paralizar completamente al objetivo
+    Suscrito a: EventManager.OnSpellHit
+    Lógica:
+      void HandleSpellHit(SpellItem spell, PlayerController target):
+        Si spell.spellType != SpellType.Freeze: return
+        StartCoroutine(ApplyFreeze(spell, target))
+      IEnumerator ApplyFreeze(SpellItem spell, PlayerController target):
+        target.SetInputEnabled(false)
+        target.rb.linearVelocity = Vector3.zero
+        yield return new WaitForSeconds(spell.duration)  // 3f
+        target.SetInputEnabled(true)
+
+  ClearInventoryEffect.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: vaciar todo el inventario del objetivo
+    Suscrito a: EventManager.OnSpellHit
+    Lógica:
+      void HandleSpellHit(SpellItem spell, PlayerController target):
+        Si spell.spellType != SpellType.ClearInventory: return
+        target.GetComponent<Inventory>().ClearAll()
+        // ClearAll() ya llama RespawnItem por cada item internamente
+
+  StealKeyEffect.cs
+    Namespace: CastleOfSelf.Items
+    Responsabilidad: robar una llave aleatoria del objetivo
+    Suscrito a: EventManager.OnSpellHit
+    Lógica:
+      void HandleSpellHit(SpellItem spell, PlayerController target):
+        Si spell.spellType != SpellType.StealKey: return
+        Inventory targetInv = target.GetComponent<Inventory>()
+        KeyItem stolenKey = targetInv.GetRandomKey()
+        Si stolenKey == null: return
+        targetInv.RemoveItem(stolenKey)
+        // RemoveItem en Inventory llama a itemSpawner.RespawnItem internamente
+
+
+### 7C — ASSETS DEL ARTISTA (contexto visual, Prog B los referencia en Inspector)
+
+Ubicación: /Assets/Art/
+
+  HUD/
+    HUD_ItemBar.png          — fondo de la barra de inventario (6 slots)
+    HUD_StaminaBar.png       — barra de stamina (vacía, media, llena)
+    HUD_Minimap_Frame.png    — marco del minimapa
+  Icons/
+    Icon_KeySilver.png       — 256x256px, PNG transparente
+    Icon_KeyGold.png         — 256x256px, PNG transparente
+    Icon_SpellSlow.png       — ícono hechizo ralentización
+    Icon_SpellFreeze.png     — ícono hechizo congelación
+    Icon_SpellClear.png      — ícono hechizo eliminar items
+    Icon_SpellSteal.png      — ícono hechizo robar llave
+    Icon_GoldenKeyAlert.png  — ícono especial para alerta en minimapa
+  SkillCheck/
+    SkillCheck_Circle.png    — gráfico del círculo de la ruleta
+  Menus/
+    Menu_Background.png      — fondo del menú principal
+    Screen_Win.png           — pantalla de victoria
+    Screen_Lose.png          — pantalla de derrota
+  Cinematics/
+    Cinematic_Frames/        — secuencia de imágenes de la intro
+  Fonts/
+    Font_Title.ttf           — fuente principal del juego (importar como TMP Font Asset)
+
+
+## ══════════════════════════════════════════════════════════
+## 8. FASES DE DESARROLLO Y COMMITS
+## ══════════════════════════════════════════════════════════
+
+FASE 0 — Setup (Horas 0 a 2)
+Commit: "setup: estructura inicial del proyecto"
+  Prog A: Crear proyecto Unity. Estructura de carpetas:
+          /Scripts/Systems/, /Scripts/Player/, /Scripts/Items/, /Scripts/UI/
+          /Prefabs/, /ScriptableObjects/, /Art/, /Scenes/
+          Crear EventManager.cs con todos los eventos declarados (aunque vacíos).
+          Crear Item.cs, KeyItem.cs, SpellItem.cs, ItemPool.cs como ScriptableObjects.
+          Crear las 3 escenas vacías: MainMenu, Game, Result.
+          Crear Player.prefab y Clone.prefab como GameObjects vacíos.
+  Prog B: Configurar rama feature/player. Crear PlayerController.cs placeholder
+          con movimiento WASD básico en escena de prueba local (TestScene_B.unity).
+          No hace commit al main aún.
+  Artista: Crear /Assets/Art/References/ con moodboard. Exportar íconos de llaves
+           en formato acordado: PNG, 256x256px, fondo transparente.
+
+FASE 1 — Core Jugable (Horas 2 a 10)
+Commit: "feat: castle layout + player movement + stamina"
+  Prog A: CastleGenerator que instancia cuartos prefab. DoorController base (bloqueado).
+          Layout de al menos 6 cuartos. Cofres con SpawnPoint. Minimapa placeholder.
+  Prog B: PlayerController completo (WASD + sprint). StaminaSystem con regeneración.
+          Inventory con 6 slots. ChestController base: abrir con E + añadir item hardcodeado.
+          PlayerInteraction detectando cofres. Merge de feature/player a main.
+  Artista: Entregar Icon_KeySilver, Icon_KeyGold, HUD_StaminaBar, HUD_ItemBar.
+           Importar en Unity. Asignar sprites en HUDController placeholder.
+
+FASE 2 — Sistemas de Juego (Horas 10 a 20)
+Commit: "feat: skill check + spells + item system"
+  Prog A: SkillCheckController completo (flecha, zona verde, resultado).
+          DoorSilver conectado al SkillCheck. DoorGold con isWinDoor.
+          Minimapa con posición de jugadores.
+  Prog B: SpellLauncher (Q + dirección mouse). SpellProjectile con colisión.
+          4 efectos de hechizos implementados. ItemSpawner con pool y respawn aleatorio.
+          Al perder item: reaparece en cofre random. Merge a main.
+  Artista: Entregar SkillCheck_Circle, íconos de hechizos. Empezar cinemática de intro.
+           Importar fuente TMP.
+
+FASE 3 — IA y HUD (Horas 20 a 30)
+Commit: "feat: clone AI + minimap alert + full HUD"
+  Prog A: CloneAI con pathfinding y toma de decisiones. Alerta de llave dorada
+          en minimapa. GameManager detecta condición de victoria y carga Result.
+  Prog B: HUDController completo suscrito a todos los eventos. Barra de stamina
+          en tiempo real. Slots de inventario con íconos. Texto de alerta rival.
+          Pulir efectos de hechizos (timers, feedback visual). Merge a main.
+  Artista: Conectar arte del HUD en escena Game. Cinemática de intro en Timeline.
+           Menú principal con botones. Entregar Menu_Background.
+
+FASE 4 — Polish y QA (Horas 30 a 38)
+Commit: "feat: result screen + audio + final polish — GOLD"
+  Prog A: ResultManager. FadeController entre escenas. AudioManager (SFX y música).
+          Bug fixing general. Balanceo: velocidad del clon, tamaño zona verde, cofres.
+  Prog B: QA completo del flujo de items (cofre → pick up → usar → perder → respawn).
+          Verificar que los 4 efectos de hechizos no se apilen de manera rota.
+          Pulir colisiones del jugador con paredes y puertas. Merge final a main.
+  Artista: Screen_Win, Screen_Lose integradas en ResultManager. Revisión visual final.
+           Verificar que cinemática de intro corra sin errores.
+
+
+## ══════════════════════════════════════════════════════════
+## 9. ESTRATEGIA DE GIT Y RAMAS
+## ══════════════════════════════════════════════════════════
+
+RAMAS:
+  main            — siempre en estado jugable. Solo se mergea al final de cada fase.
+  develop         — rama de integración entre fases (opcional)
+  feature/world   — Prog A. Mapa, puertas, IA, managers.
+  feature/player  — Prog B. Jugador, items, hechizos. ← RAMA ACTIVA DEL USUARIO
+  feature/art     — Artista. Solo toca /Assets/Art/ y Canvas en su rama.
+
+REGLAS ANTI-CONFLICTO:
+  - Nadie toca Game.unity directamente hasta Fase 3.
+    Prog A integra todo en Game.unity al final de cada fase.
+  - Prog B trabaja en TestScene_B.unity para pruebas locales.
+  - El Artista NUNCA edita scripts. Solo importa assets y asigna en el Inspector.
+  - EventManager.cs, GameManager.cs, SceneLoader.cs: solo Prog A los modifica.
+  - Player.prefab: Prog B lo modifica libremente en feature/player.
+  - ProjectSettings/: solo Prog A modifica configuraciones globales.
+  - Los ScriptableObjects base (Item.cs, KeyItem.cs, etc.) son de solo lectura
+    para Prog B una vez que Prog A los crea en Fase 0.
+
+GITIGNORE ESTÁNDAR DE UNITY (no versionar):
+  /Library/, /Temp/, /obj/, /Build/, *.csproj, *.sln, *.user
+
+FORMATO DE COMMITS:
+  feat:     nueva funcionalidad
+  fix:      corrección de bug
+  art:      assets nuevos del artista
+  refactor: limpieza de código sin cambiar comportamiento
+  merge:    integración de rama al main
+
+
+## ══════════════════════════════════════════════════════════
+## 10. CONVENCIONES DE CÓDIGO DEL PROYECTO
+## ══════════════════════════════════════════════════════════
+
+- Namespaces: CastleOfSelf (raíz), CastleOfSelf.Player, CastleOfSelf.Items, CastleOfSelf.UI
+- Siempre desuscribirse de eventos en OnDisable() para evitar memory leaks
+- Coroutines para efectos temporales (slow, freeze): IEnumerator + StartCoroutine
+- Singletons: patrón con Instance estático privado, Awake() asigna la instancia
+- [SerializeField] para referencias asignadas en el Inspector (no public)
+- NUNCA usar GameObject.Find() en Update() — usar referencias directas o eventos
+- NUNCA usar FindObjectOfType() en Update() — solo en Awake() o Start()
+- Comentarios en español para consistencia del equipo
+- Nombres de métodos y variables en inglés (convención de Unity)
+- Un archivo por clase, nombre del archivo igual al nombre de la clase
+- Estructura de un MonoBehaviour: Variables → Lifecycle (Awake, Start, OnEnable,
+  OnDisable, Update) → Métodos públicos → Métodos privados → Coroutines
+
+
+## ══════════════════════════════════════════════════════════
+## 11. RESUMEN EJECUTIVO PARA COPILOT
+## ══════════════════════════════════════════════════════════
+
+El usuario es el PROGRAMADOR B de este proyecto.
+Su trabajo cubre todos los sistemas relacionados con el jugador humano y los items.
+
+PRIORIDAD DE AYUDA (de mayor a menor):
+  1. PlayerController.cs, StaminaSystem.cs, PlayerInteraction.cs
+  2. Inventory.cs, ChestController.cs, ItemSpawner.cs
+  3. HUDController.cs
+  4. SpellLauncher.cs, SpellProjectile.cs
+  5. SlowEffect.cs, FreezeEffect.cs, ClearInventoryEffect.cs, StealKeyEffect.cs
+
+CUANDO GENERES CÓDIGO:
+  - Usa los nombres exactos de eventos del EventManager (ver sección 4)
+  - Usa los enums definidos: ItemType, KeyType, SpellType, DoorType, GameState
+  - Respeta la interfaz IInteractable con la firma exacta: void Interact(PlayerController player)
+  - Recuerda que Inventory.RemoveItem internamente llama itemSpawner.RespawnItem
+  - No generes código que toque DoorController, GameManager, CloneAI, MinimapController
+    ni EventManager — esos son de Prog A
+  - Todos los scripts de Prog B van en los namespaces CastleOfSelf.Player,
+    CastleOfSelf.Items o CastleOfSelf.UI según corresponda
+  - Siempre incluir la desuscripción de eventos en OnDisable()

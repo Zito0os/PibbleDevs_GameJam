@@ -69,7 +69,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        //// Si el EmotePanel está abierto, no procesar input de movimiento
+        //// Si el EmotePanel estï¿½ abierto, no procesar input de movimiento
         //if (EmotePanel.isEmotePanelActive)
         //{
         //    // Mantener la gravedad aunque no se pueda mover
