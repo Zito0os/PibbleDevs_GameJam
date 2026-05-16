@@ -77,16 +77,26 @@ public class ChestController : MonoBehaviour
             return;
         }
 
+        int transferredCount = 0;
         foreach (ItemStack stack in contents)
         {
             bool added = inventory.AddItem(stack.itemType, stack.quantity);
             if (added)
             {
                 Debug.Log($"ChestController: {stack} transferido al inventario del jugador.");
+                transferredCount++;
+            }
+            else
+            {
+                Debug.LogWarning($"ChestController: inventario lleno, no se pudo transferir {stack}.");
+                break;
             }
         }
 
-        contents.Clear();
+        if (transferredCount > 0)
+        {
+            contents.RemoveRange(0, transferredCount);
+        }
     }
 
     // Get chest contents (for UI or inspection)

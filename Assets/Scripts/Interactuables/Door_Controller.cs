@@ -13,6 +13,10 @@ public class Door_Controller : MonoBehaviour
 
     public int Tipo_de_puerta = 0; // 0: normal, 1: plata, 2: oro
 
+    [Header("Key Requirements")]
+    public bool requiereLlave = false;
+    public ItemType llaveRequerida = ItemType.KeySilver;
+
     private const string ParamAbriendoPuerta = "abriendo_puerta";
     private const string ParamPuertaAbierta = "puerta_abierta";
     private const string ParamCerrandoPuerta = "cerrando_puerta";
@@ -33,6 +37,24 @@ public class Door_Controller : MonoBehaviour
     private void Awake()
     {
         CreatePivotIfNeeded();
+        SyncKeySettingsWithDoorType();
+    }
+
+    private void OnValidate()
+    {
+        SyncKeySettingsWithDoorType();
+    }
+
+    private void SyncKeySettingsWithDoorType()
+    {
+        if (Tipo_de_puerta <= 0)
+        {
+            requiereLlave = false;
+            return;
+        }
+
+        requiereLlave = true;
+        llaveRequerida = Tipo_de_puerta == 1 ? ItemType.KeySilver : ItemType.KeyGold;
     }
 
     private void CreatePivotIfNeeded()
@@ -57,6 +79,11 @@ public class Door_Controller : MonoBehaviour
     // Called by Selected.cs when player presses E
     public void AbrirCofre()
     {
+        AbrirCofre(null);
+    }
+
+    public void AbrirCofre(PlayerMovement player)
+    {
         if (debugDoorLogs)
         {
             Debug.Log("[Door] Input recibido -> puerta=" + name + " | isRunningSequence=" + isRunningSequence + " | CofreAbierto=" + CofreAbierto);
@@ -74,6 +101,13 @@ public class Door_Controller : MonoBehaviour
             if (debugDoorLogs)
                 Debug.Log("[Door] Iniciando cierre en " + name);
             StartCoroutine(CloseSequence());
+            return;
+        }
+
+        if (!PuedeAbrirseConJugador(player))
+        {
+            if (debugDoorLogs)
+                Debug.LogWarning("[Door] No se pudo abrir " + name + ". Falta la llave requerida: " + llaveRequerida);
             return;
         }
 
@@ -197,6 +231,24 @@ public class Door_Controller : MonoBehaviour
 
         float clipLength = animator.GetCurrentAnimatorStateInfo(0).length;
         return Mathf.Max(clipLength, fallback);
+    }
+
+    private bool PuedeAbrirseConJugador(PlayerMovement player)
+    {
+        if (!requiereLlave)
+            return true;
+
+        if (player == null)
+            return false;
+
+        Inventory inventory = player.GetComponent<Inventory>();
+        if (inventory == null)
+            return false;
+
+        if (!inventory.HasItem(llaveRequerida, 1))
+            return false;
+
+        return inventory.RemoveItem(llaveRequerida, 1);
     }
 
     private bool PlayAnimatorStateImmediate(string stateName)
