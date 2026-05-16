@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 public class Selected : MonoBehaviour
 {
@@ -8,14 +9,53 @@ public class Selected : MonoBehaviour
     public Texture2D puntero;
     public GameObject TextDetect;
     GameObject ultimoReconocido = null;
+
+    // TMP widget inside the "Interactuable-Widget" empty object
+    private TextMeshProUGUI interactableWidgetText;
+    private bool? cachedWidgetActive = null;
     void Start()
     {
         mask = LayerMask.GetMask("RayCastDetect");
-        TextDetect.SetActive(false);
+        if (TextDetect != null)
+            TextDetect.SetActive(false);
+
+        GameObject widget = GameObject.Find("Interactuable-Widget");
+        if (widget != null)
+        {
+            interactableWidgetText = widget.GetComponentInChildren<TextMeshProUGUI>(true);
+        }
     }
 
     void Update()
     {
+        bool running = DoorWheelMinigame.IsRunning;
+
+        if (running)
+        {
+            Deselect();
+            if (TextDetect != null)
+                TextDetect.SetActive(false);
+
+            if (interactableWidgetText != null)
+            {
+                if (!cachedWidgetActive.HasValue)
+                    cachedWidgetActive = interactableWidgetText.gameObject.activeSelf;
+
+                interactableWidgetText.gameObject.SetActive(false);
+            }
+
+            return;
+        }
+
+        // restore widget state when minigame finished
+        if (cachedWidgetActive.HasValue)
+        {
+            if (interactableWidgetText != null)
+                interactableWidgetText.gameObject.SetActive(cachedWidgetActive.Value);
+
+            cachedWidgetActive = null;
+        }
+
         RaycastHit hit;
 
         if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, distancia, mask))

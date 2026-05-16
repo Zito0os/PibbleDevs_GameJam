@@ -76,6 +76,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (DoorWheelMinigame.IsRunning)
+            return;
+
         //// Si el EmotePanel est� abierto, no procesar input de movimiento
         //if (EmotePanel.isEmotePanelActive)
         //{

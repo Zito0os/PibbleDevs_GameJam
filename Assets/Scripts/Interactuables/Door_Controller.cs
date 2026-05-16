@@ -34,6 +34,7 @@ public class Door_Controller : MonoBehaviour
 
     private bool isRunningSequence = false;
     private InventoryUI cachedInventoryUI;
+    private DoorWheelMinigame cachedWheelMinigame;
 
     private void Awake()
     {
@@ -90,6 +91,13 @@ public class Door_Controller : MonoBehaviour
             Debug.Log("[Door] Input recibido -> puerta=" + name + " | isRunningSequence=" + isRunningSequence + " | CofreAbierto=" + CofreAbierto);
         }
 
+        if (DoorWheelMinigame.IsRunning)
+        {
+            if (debugDoorLogs)
+                Debug.Log("[Door] Input ignorado: minijuego activo en " + name);
+            return;
+        }
+
         if (isRunningSequence)
         {
             if (debugDoorLogs)
@@ -105,10 +113,28 @@ public class Door_Controller : MonoBehaviour
             return;
         }
 
-        if (!PuedeAbrirseConJugador(player))
+        if (requiereLlave)
         {
-            if (debugDoorLogs)
-                Debug.LogWarning("[Door] No se pudo abrir " + name + ". Falta la llave requerida: " + llaveRequerida);
+            if (!TieneLlaveSeleccionadaValida(player))
+            {
+                if (debugDoorLogs)
+                    Debug.LogWarning("[Door] No se pudo iniciar la ruleta en " + name + ". Llave no válida o no seleccionada.");
+                return;
+            }
+
+            DoorWheelMinigame wheelMinigame = GetWheelMinigame();
+            if (wheelMinigame == null)
+            {
+                if (debugDoorLogs)
+                    Debug.LogWarning("[Door] No se encontró DoorWheelMinigame para " + name);
+                return;
+            }
+
+            bool started = wheelMinigame.StartChallenge(this, player, llaveRequerida);
+            if (!started && debugDoorLogs)
+            {
+                Debug.LogWarning("[Door] No se pudo iniciar la ruleta en " + name);
+            }
             return;
         }
 
@@ -234,12 +260,42 @@ public class Door_Controller : MonoBehaviour
         return Mathf.Max(clipLength, fallback);
     }
 
-    private bool PuedeAbrirseConJugador(PlayerMovement player)
+    public void ResolveWheelSuccess(PlayerMovement player, ItemType keyType)
+    {
+        if (player == null)
+            return;
+
+        Inventory inventory = player.GetComponent<Inventory>();
+        if (inventory == null)
+            return;
+
+        if (inventory.hasActiveItem && inventory.activeItemType == keyType)
+        {
+            inventory.UseSelectedItem();
+        }
+
+        ShowDoorMessage("Puerta abierta");
+        StartCoroutine(OpenSequence());
+    }
+
+    public void ResolveWheelFailure(PlayerMovement player, ItemType keyType)
+    {
+        if (player != null)
+        {
+            Inventory inventory = player.GetComponent<Inventory>();
+            if (inventory != null && inventory.hasActiveItem && inventory.activeItemType == keyType)
+            {
+                inventory.UseSelectedItem();
+            }
+        }
+
+        ShowDoorMessage("La llave se rompió");
+    }
+
+    private bool TieneLlaveSeleccionadaValida(PlayerMovement player)
     {
         if (!requiereLlave)
             return true;
-
-        ItemType requiredKey = llaveRequerida;
 
         if (player == null)
         {
@@ -260,7 +316,7 @@ public class Door_Controller : MonoBehaviour
             return false;
         }
 
-        if (inventory.activeItemType != requiredKey)
+        if (inventory.activeItemType != llaveRequerida)
         {
             if (EsLlaveInventario(inventory.activeItemType))
                 ShowDoorMessage("LLave equivocada");
@@ -270,8 +326,7 @@ public class Door_Controller : MonoBehaviour
             return false;
         }
 
-        //ShowDoorMessage("1");
-        return inventory.UseSelectedItem();
+        return true;
     }
 
     private bool EsLlaveInventario(ItemType itemType)
@@ -300,6 +355,16 @@ public class Door_Controller : MonoBehaviour
         }
 
         return cachedInventoryUI;
+    }
+
+    private DoorWheelMinigame GetWheelMinigame()
+    {
+        if (cachedWheelMinigame == null)
+        {
+            cachedWheelMinigame = FindFirstObjectByType<DoorWheelMinigame>();
+        }
+
+        return cachedWheelMinigame;
     }
 
     private bool PlayAnimatorStateImmediate(string stateName)

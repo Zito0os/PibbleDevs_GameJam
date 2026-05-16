@@ -23,7 +23,10 @@ public class Cameralook : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Si el EmotePanel está abierto, no procesar input de cámara
+        if (DoorWheelMinigame.IsRunning)
+            return;
+
+        // Si el EmotePanel estï¿½ abierto, no procesar input de cï¿½mara
         //if (EmotePanel.isEmotePanelActive)
         //    return;
 
