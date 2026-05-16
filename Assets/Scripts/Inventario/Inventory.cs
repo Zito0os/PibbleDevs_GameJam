@@ -166,7 +166,7 @@ public class Inventory : MonoBehaviour
     {
         ItemStack stack = GetActiveItemStack();
         hasActiveItem = stack != null;
-        activeItemType = stack != null ? stack.itemType : default;
+        activeItemType = stack != null ? stack.itemType : ItemType.None;
         activeItemName = stack != null ? stack.itemType.ToString() : "None";
     }
 

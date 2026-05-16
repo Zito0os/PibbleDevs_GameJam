@@ -33,6 +33,7 @@ public class Door_Controller : MonoBehaviour
     public bool Interactuado = false;
 
     private bool isRunningSequence = false;
+    private InventoryUI cachedInventoryUI;
 
     private void Awake()
     {
@@ -238,17 +239,67 @@ public class Door_Controller : MonoBehaviour
         if (!requiereLlave)
             return true;
 
+        ItemType requiredKey = llaveRequerida;
+
         if (player == null)
+        {
+            ShowDoorMessage("Se necesita llave");
             return false;
+        }
 
         Inventory inventory = player.GetComponent<Inventory>();
         if (inventory == null)
+        {
+            ShowDoorMessage("Se necesita llave");
             return false;
+        }
 
-        if (!inventory.HasItem(llaveRequerida, 1))
+        if (!inventory.hasActiveItem)
+        {
+            ShowDoorMessage("Se necesita llave");
             return false;
+        }
 
-        return inventory.RemoveItem(llaveRequerida, 1);
+        if (inventory.activeItemType != requiredKey)
+        {
+            if (EsLlaveInventario(inventory.activeItemType))
+                ShowDoorMessage("LLave equivocada");
+            else
+                ShowDoorMessage("Se necesita llave");
+
+            return false;
+        }
+
+        //ShowDoorMessage("1");
+        return inventory.UseSelectedItem();
+    }
+
+    private bool EsLlaveInventario(ItemType itemType)
+    {
+        return itemType == ItemType.KeySilver || itemType == ItemType.KeyGold;
+    }
+
+    private void ShowDoorMessage(string message)
+    {
+        InventoryUI inventoryUI = GetInventoryUI();
+        if (inventoryUI != null)
+        {
+            inventoryUI.SetDoorMessage(message);
+        }
+        else if (debugDoorLogs)
+        {
+            Debug.LogWarning("[Door] No se encontró InventoryUI para mostrar el mensaje: " + message);
+        }
+    }
+
+    private InventoryUI GetInventoryUI()
+    {
+        if (cachedInventoryUI == null)
+        {
+            cachedInventoryUI = FindFirstObjectByType<InventoryUI>();
+        }
+
+        return cachedInventoryUI;
     }
 
     private bool PlayAnimatorStateImmediate(string stateName)

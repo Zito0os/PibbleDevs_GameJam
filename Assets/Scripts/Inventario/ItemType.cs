@@ -1,9 +1,10 @@
 // Define the 5 item types in the game
 public enum ItemType
 {
-    KeySilver,      // Llave Plateada
-    KeyGold,        // Llave Dorada
-    SpellSlow,      // Hechizo Ralentización
-    SpellFreeze,    // Hechizo Congelación
-    SpellClear      // Hechizo Eliminar Items
+    None = -1,
+    KeySilver = 0,      // Llave Plateada
+    KeyGold = 1,        // Llave Dorada
+    SpellSlow = 2,      // Hechizo Ralentización
+    SpellFreeze = 3,    // Hechizo Congelación
+    SpellClear = 4      // Hechizo Eliminar Items
 }
