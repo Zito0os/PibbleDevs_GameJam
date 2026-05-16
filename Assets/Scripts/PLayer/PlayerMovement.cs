@@ -152,30 +152,33 @@ public class PlayerMovement : MonoBehaviour
     public void RunCheck()
     {
 
-        //checar bien lo de las corutinas logica para correr
-        if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            isSprinting = !isSprinting;
-            //para que no se solapen entre ellas
+        // Hold LeftShift to sprint, release to stop. Consume stamina continuously while held.
+        bool holdSprint = Input.GetKey(KeyCode.LeftShift);
 
-            if (isSprinting)
-            {
-                staminaSlider.UseStamina(staminaUseAmount);
-            }
-            else
-            {
+        if (holdSprint && !isSprinting)
+        {
+            isSprinting = true;
+        }
+
+        if (!holdSprint && isSprinting)
+        {
+            isSprinting = false;
+            if (staminaSlider != null)
                 staminaSlider.StopSprinting();
-            }
         }
 
         if (isSprinting)
         {
             sprintSpeed = sprintSpeedMultiplier;
+            if (staminaSlider != null)
+            {
+                // consume per second
+                staminaSlider.UseStamina(staminaUseAmount * Time.deltaTime);
+            }
         }
         else
         {
             sprintSpeed = 1;
-
         }
     }
 

@@ -55,6 +55,21 @@ public class Selected : MonoBehaviour
                     }
                 }
             }
+            else if (hit.collider.tag == "Puerta")
+            {
+                Door_Controller doorController = hit.collider.GetComponentInParent<Door_Controller>();
+                bool esPuerta = hit.collider.CompareTag("Puerta") || (doorController != null && doorController.CompareTag("Puerta"));
+
+                if (esPuerta && Input.GetKeyDown(KeyCode.E))
+                {
+
+                    if (doorController != null)
+                    {
+                        doorController.AbrirCofre();
+                        doorController.OnAfterAbrirCofre();
+                    }
+                }
+            }
 
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.red);
         }
