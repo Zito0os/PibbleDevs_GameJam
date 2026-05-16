@@ -15,10 +15,20 @@ public class ChestController : MonoBehaviour
     public bool ObjetoTomado = false;
     public bool Interactuado = false;
 
+    [Header("Raycast Layer Swap")]
+    public bool cambiarLayerAlAbrir = true;
+    public string layerAbierto = "Default";
+    public string layerCerrado = "RayCastDetect";
+
     private bool isRunningSequence = false;
+    private Dictionary<Transform, int> cachedLayers = new Dictionary<Transform, int>();
 
     private void Start()
     {
+        CacheLayersIfNeeded();
+
+        SyncAnimatorFlags();
+
         // Inicializar contenido de prueba si no hay nada
         if (contents.Count == 0)
         {
@@ -43,6 +53,8 @@ public class ChestController : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool("Interactuado", true);
+            animator.SetBool("CofreAbierto", false);
+            animator.SetBool("ObjetoTomado", false);
         }
 
         StartCoroutine(OpenSequence());
@@ -61,6 +73,12 @@ public class ChestController : MonoBehaviour
             return;
 
         ObjetoTomado = true;
+
+        if (animator != null)
+        {
+            animator.SetBool("ObjetoTomado", true);
+            animator.SetBool("CofreAbierto", true);
+        }
 
         // start close sequence only if not already running
         if (!isRunningSequence)
@@ -142,11 +160,20 @@ public class ChestController : MonoBehaviour
 
             CofreAbierto = true;
             Interactuado = false;
+            if (animator != null)
+            {
+                animator.SetBool("CofreAbierto", true);
+                animator.SetBool("ObjetoTomado", false);
+                animator.SetBool("Interactuado", false);
+            }
+            ApplyOpenLayer();
         }
         else
         {
             // no animator: simulate immediate open
             CofreAbierto = true;
+            Interactuado = false;
+            ApplyOpenLayer();
         }
 
         isRunningSequence = false;
@@ -180,12 +207,20 @@ public class ChestController : MonoBehaviour
             CofreAbierto = false;
             ObjetoTomado = false;
             Interactuado = false;
+            if (animator != null)
+            {
+                animator.SetBool("CofreAbierto", false);
+                animator.SetBool("ObjetoTomado", false);
+                animator.SetBool("Interactuado", false);
+            }
+            RestoreClosedLayer();
         }
         else
         {
             CofreAbierto = false;
             ObjetoTomado = false;
             Interactuado = false;
+            RestoreClosedLayer();
         }
 
         isRunningSequence = false;
@@ -218,5 +253,91 @@ public class ChestController : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    private void CacheLayersIfNeeded()
+    {
+        if (cachedLayers.Count > 0)
+            return;
+
+        Transform[] all = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            Transform t = all[i];
+            if (ShouldSkipLayer(t))
+                continue;
+
+            if (!cachedLayers.ContainsKey(t))
+            {
+                cachedLayers.Add(t, t.gameObject.layer);
+            }
+        }
+    }
+
+    private bool ShouldSkipLayer(Transform t)
+    {
+        if (t.name == "SpawnObjetos")
+            return true;
+
+        if (t.GetComponent<ItemPickup>() != null)
+            return true;
+
+        return false;
+    }
+
+    private void ApplyOpenLayer()
+    {
+        if (!cambiarLayerAlAbrir)
+            return;
+
+        CacheLayersIfNeeded();
+
+        int openLayer = LayerMask.NameToLayer(layerAbierto);
+        if (openLayer < 0)
+        {
+            openLayer = 0;
+        }
+
+        foreach (var pair in cachedLayers)
+        {
+            if (pair.Key != null)
+            {
+                pair.Key.gameObject.layer = openLayer;
+            }
+        }
+    }
+
+    private void RestoreClosedLayer()
+    {
+        if (!cambiarLayerAlAbrir)
+            return;
+
+        CacheLayersIfNeeded();
+
+        int closedLayer = LayerMask.NameToLayer(layerCerrado);
+        foreach (var pair in cachedLayers)
+        {
+            if (pair.Key == null)
+                continue;
+
+            if (closedLayer >= 0)
+            {
+                pair.Key.gameObject.layer = closedLayer;
+            }
+            else
+            {
+                pair.Key.gameObject.layer = pair.Value;
+            }
+        }
+    }
+
+    private void SyncAnimatorFlags()
+    {
+        if (animator == null)
+            return;
+
+        animator.SetBool("CofreAbierto", CofreAbierto);
+        animator.SetBool("ObjetoTomado", ObjetoTomado);
+        animator.SetBool("Interactuado", Interactuado);
     }
 }

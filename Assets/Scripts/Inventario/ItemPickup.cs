@@ -50,6 +50,11 @@ public class ItemPickup : MonoBehaviour
         {
             isPickedUp = true;
             Debug.Log($"ItemPickup: {itemType} x{quantity} recogido.");
+            ChestController chest = GetComponentInParent<ChestController>();
+            if (chest != null)
+            {
+                chest.ItemTaken();
+            }
             // Opcionalmente, destruir o desactivar el item
             Destroy(gameObject);
         }
