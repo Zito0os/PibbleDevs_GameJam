@@ -6,7 +6,9 @@ using System.Collections.Generic;
 public class Cameralook : MonoBehaviour
 {
 
-    public float sensitivity = 80f;
+    [Header("Sensitivity")]
+    public float mouseSensitivity = 80f;
+    public float gamepadSensitivity = 80f;
     //posicion del player
     public Transform playerBody;
     private MultijugadorPlayerContext playerInputContext;
@@ -51,6 +53,7 @@ public class Cameralook : MonoBehaviour
 
         // esto guarda la rotacion del mouse en el eje X y Y
         Vector2 lookInput = playerInputContext != null ? playerInputContext.Look : Vector2.zero;
+        float sensitivity = GetCurrentSensitivity();
         float mouseX = lookInput.x * sensitivity * Time.deltaTime;
 
 
@@ -69,5 +72,13 @@ public class Cameralook : MonoBehaviour
 
 
 
+    }
+
+    private float GetCurrentSensitivity()
+    {
+        if (playerInputContext != null && playerInputContext.IsGamepad)
+            return gamepadSensitivity;
+
+        return mouseSensitivity;
     }
 }
