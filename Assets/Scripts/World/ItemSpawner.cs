@@ -20,12 +20,18 @@ public class ItemSpawner : MonoBehaviour
     [Header("Debug")]
     public bool forceSpawn = false;
 
+    public bool IsEmpty
+    {
+        get
+        {
+            EnsureSpawnPoint();
+            return spawnPoint != null && spawnPoint.childCount == 0;
+        }
+    }
+
     private void Start()
     {
-        if (spawnPoint == null)
-        {
-            spawnPoint = FindSpawnPoint();
-        }
+        EnsureSpawnPoint();
 
         if (spawnPoint == null)
         {
@@ -58,6 +64,25 @@ public class ItemSpawner : MonoBehaviour
         Instantiate(prefabToSpawn, spawnPoint.position, spawnPoint.rotation, spawnPoint);
     }
 
+    public bool CanSpawnItem(ItemType itemType)
+    {
+        return FindPrefabForItem(itemType) != null;
+    }
+
+    public bool TrySpawnItem(ItemType itemType)
+    {
+        EnsureSpawnPoint();
+        if (spawnPoint == null || spawnPoint.childCount > 0)
+            return false;
+
+        GameObject prefab = FindPrefabForItem(itemType);
+        if (prefab == null)
+            return false;
+
+        Instantiate(prefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+        return true;
+    }
+
     private GameObject GetRandomPrefab(GameObject[] pool)
     {
         if (pool == null || pool.Length == 0)
@@ -75,6 +100,38 @@ public class ItemSpawner : MonoBehaviour
         }
 
         return null;
+    }
+
+    private GameObject FindPrefabForItem(ItemType itemType)
+    {
+        GameObject[] pool = cofreRaro ? rareLootPrefabs : normalLootPrefabs;
+        if (pool == null || pool.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < pool.Length; i++)
+        {
+            GameObject prefab = pool[i];
+            if (prefab == null)
+                continue;
+
+            ItemPickup pickup = prefab.GetComponent<ItemPickup>();
+            if (pickup != null && pickup.GetItemType() == itemType)
+            {
+                return prefab;
+            }
+        }
+
+        return null;
+    }
+
+    private void EnsureSpawnPoint()
+    {
+        if (spawnPoint == null)
+        {
+            spawnPoint = FindSpawnPoint();
+        }
     }
 
     private Transform FindSpawnPoint()

@@ -20,14 +20,23 @@ public class ChestController : MonoBehaviour
     public string layerAbierto = "Default";
     public string layerCerrado = "RayCastDetect";
 
+    [Header("Auto Close When Empty")]
+    public bool cerrarSiVacio = true;
+    public float tiempoCerrarSiVacio = 5f;
+
     private bool isRunningSequence = false;
     private Dictionary<Transform, int> cachedLayers = new Dictionary<Transform, int>();
+    private Coroutine autoCloseRoutine;
+    private ItemSpawner cachedSpawner;
+    private Transform cachedSpawnPoint;
 
     private void Start()
     {
         CacheLayersIfNeeded();
 
         SyncAnimatorFlags();
+
+        CacheSpawnRefs();
 
         // Inicializar contenido de prueba si no hay nada
         if (contents.Count == 0)
@@ -73,6 +82,8 @@ public class ChestController : MonoBehaviour
             return;
 
         ObjetoTomado = true;
+
+        StopAutoClose();
 
         if (animator != null)
         {
@@ -167,6 +178,7 @@ public class ChestController : MonoBehaviour
                 animator.SetBool("Interactuado", false);
             }
             ApplyOpenLayer();
+            TryAutoCloseIfEmpty();
         }
         else
         {
@@ -174,6 +186,7 @@ public class ChestController : MonoBehaviour
             CofreAbierto = true;
             Interactuado = false;
             ApplyOpenLayer();
+            TryAutoCloseIfEmpty();
         }
 
         isRunningSequence = false;
@@ -182,6 +195,7 @@ public class ChestController : MonoBehaviour
     private IEnumerator CloseSequence()
     {
         isRunningSequence = true;
+        StopAutoClose();
 
         // set parameter to start closing if needed
         Interactuado = true;
@@ -339,5 +353,85 @@ public class ChestController : MonoBehaviour
         animator.SetBool("CofreAbierto", CofreAbierto);
         animator.SetBool("ObjetoTomado", ObjetoTomado);
         animator.SetBool("Interactuado", Interactuado);
+    }
+
+    private void CacheSpawnRefs()
+    {
+        if (cachedSpawner == null)
+        {
+            cachedSpawner = GetComponentInChildren<ItemSpawner>(true);
+        }
+
+        if (cachedSpawnPoint == null)
+        {
+            Transform[] all = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i].name == "SpawnObjetos")
+                {
+                    cachedSpawnPoint = all[i];
+                    break;
+                }
+            }
+        }
+    }
+
+    private bool IsEmptyChest()
+    {
+        CacheSpawnRefs();
+
+        if (cachedSpawner != null)
+        {
+            return cachedSpawner.IsEmpty;
+        }
+
+        if (cachedSpawnPoint != null)
+        {
+            return cachedSpawnPoint.childCount == 0;
+        }
+
+        return false;
+    }
+
+    private void TryAutoCloseIfEmpty()
+    {
+        if (!cerrarSiVacio)
+            return;
+
+        if (!IsEmptyChest())
+            return;
+
+        StopAutoClose();
+        autoCloseRoutine = StartCoroutine(AutoCloseEmptyRoutine());
+    }
+
+    private IEnumerator AutoCloseEmptyRoutine()
+    {
+        yield return new WaitForSeconds(tiempoCerrarSiVacio);
+
+        if (!CofreAbierto || ObjetoTomado)
+            yield break;
+
+        if (!IsEmptyChest())
+            yield break;
+
+        ObjetoTomado = true;
+        if (animator != null)
+        {
+            animator.SetBool("ObjetoTomado", true);
+            animator.SetBool("CofreAbierto", true);
+        }
+
+        if (!isRunningSequence)
+            StartCoroutine(CloseSequence());
+    }
+
+    private void StopAutoClose()
+    {
+        if (autoCloseRoutine != null)
+        {
+            StopCoroutine(autoCloseRoutine);
+            autoCloseRoutine = null;
+        }
     }
 }

@@ -90,6 +90,8 @@ public class Inventory : MonoBehaviour
         stack.quantity -= quantity;
         Debug.Log($"Inventory: {itemType} x{quantity} removido. Quedan: {stack.quantity}");
 
+        RespawnRemovedItem(itemType, quantity);
+
         if (stack.quantity <= 0)
         {
             itemStacks.Remove(stack);
@@ -130,6 +132,8 @@ public class Inventory : MonoBehaviour
 
         stack.quantity -= 1;
         Debug.Log($"Inventory: usando {stack.itemType}. Quedan: {Mathf.Max(stack.quantity, 0)}");
+
+        RespawnRemovedItem(stack.itemType, 1);
 
         if (stack.quantity <= 0)
         {
@@ -187,11 +191,37 @@ public class Inventory : MonoBehaviour
     // Vaciar inventario
     public void Clear()
     {
+        for (int i = 0; i < itemStacks.Count; i++)
+        {
+            ItemStack stack = itemStacks[i];
+            if (stack == null)
+                continue;
+
+            RespawnRemovedItem(stack.itemType, stack.quantity);
+        }
+
         itemStacks.Clear();
         Debug.Log("Inventory: vaciado completamente.");
         activeSlotIndex = 0;
         UpdateActiveSelectionState();
         OnInventoryChanged?.Invoke();
+    }
+
+    private void RespawnRemovedItem(ItemType itemType, int quantity)
+    {
+        if (quantity <= 0)
+            return;
+
+        ItemRespawnManager manager = ItemRespawnManager.Instance;
+        if (manager == null)
+        {
+            manager = FindFirstObjectByType<ItemRespawnManager>();
+        }
+
+        if (manager != null)
+        {
+            manager.RespawnItem(itemType, quantity);
+        }
     }
 
     // Obtener string de debug para mostrar inventario
