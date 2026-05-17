@@ -138,13 +138,14 @@ public class DoorWheelMinigame : MonoBehaviour
         if (attemptsLeft <= 0)
         {
             CompleteFailure();
+            
             return;
         }
 
         ShowMessage($"Fallaste. Intentos restantes: {attemptsLeft}");
         Invoke(nameof(RestartSpin), restartMessageDuration);
     }
-
+//hola si lees esto eres puton :)
     private void RestartSpin()
     {
         if (!isRunning)
