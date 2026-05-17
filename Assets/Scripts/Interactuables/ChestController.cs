@@ -135,6 +135,8 @@ public class ChestController : MonoBehaviour
     {
         isRunningSequence = true;
 
+        SoundManager.PlaySound(SoundType.AbrirCofre);
+
         // wait until animator enters the opening state
         if (animator != null)
         {
@@ -196,6 +198,8 @@ public class ChestController : MonoBehaviour
     {
         isRunningSequence = true;
         StopAutoClose();
+
+        SoundManager.PlaySound(SoundType.CerrarCofre);
 
         // set parameter to start closing if needed
         Interactuado = true;

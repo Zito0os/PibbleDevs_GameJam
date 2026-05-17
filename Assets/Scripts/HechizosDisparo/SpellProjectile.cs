@@ -60,12 +60,15 @@ public class SpellProjectile : MonoBehaviour
         switch (effectType)
         {
             case SpellEffectType.Slow:
+                SoundManager.PlaySound(SoundType.SlowLlegado);
                 target.ApplySlow(slowMultiplier, slowDuration);
                 break;
             case SpellEffectType.Freeze:
+                SoundManager.PlaySound(SoundType.FreezeLlegado);
                 target.ApplyFreeze(freezeDuration);
                 break;
             case SpellEffectType.Clear:
+                SoundManager.PlaySound(SoundType.ClearLlegado);
                 target.ClearInventoryFromSpell();
                 break;
         }

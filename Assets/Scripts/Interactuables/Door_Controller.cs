@@ -163,6 +163,8 @@ public class Door_Controller : MonoBehaviour
         isRunningSequence = true;
         Interactuado = true;
 
+        SoundManager.PlaySound(SoundType.AbrirPuerta);
+
         if (debugDoorLogs)
             Debug.Log("[Door] OpenSequence START -> " + name);
 
@@ -210,6 +212,8 @@ public class Door_Controller : MonoBehaviour
     {
         isRunningSequence = true;
         Interactuado = true;
+
+        SoundManager.PlaySound(SoundType.CerrarPuerta);
 
         if (debugDoorLogs)
             Debug.Log("[Door] CloseSequence START -> " + name);
@@ -296,6 +300,8 @@ public class Door_Controller : MonoBehaviour
             }
         }
 
+        SoundManager.PlaySound(SoundType.LlaveRota);
+
         ShowDoorMessage("La llave se rompió");
     }
 
@@ -326,7 +332,10 @@ public class Door_Controller : MonoBehaviour
         if (inventory.activeItemType != llaveRequerida)
         {
             if (EsLlaveInventario(inventory.activeItemType))
+            {
+                SoundManager.PlaySound(SoundType.ErrorEleccion);
                 ShowDoorMessage("LLave equivocada");
+            }
             else
                 ShowDoorMessage("Se necesita llave");
 

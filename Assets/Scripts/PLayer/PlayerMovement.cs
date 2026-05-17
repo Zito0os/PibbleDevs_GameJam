@@ -36,6 +36,9 @@ public class PlayerMovement : MonoBehaviour
     public AudioClip sonidoCorrer;
     [Range(0f, 1f)] public float volumenCaminar = 0.7f;
     [Range(0f, 1f)] public float volumenCorrer = 0.85f;
+    [SerializeField] private float caminarIntervalo = 0.45f;
+    [SerializeField] private float correrIntervalo = 0.3f;
+    private float pasoTimer;
 
     private void Start()
     {
@@ -279,6 +282,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!estaMoviendose)
         {
+            pasoTimer = 0f;
             if (audioPasosCaminar != null && audioPasosCaminar.isPlaying)
                 audioPasosCaminar.Stop();
 
@@ -288,18 +292,17 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        pasoTimer += Time.deltaTime;
+
         if (isSprinting)
         {
             if (audioPasosCaminar != null && audioPasosCaminar.isPlaying)
                 audioPasosCaminar.Stop();
 
-            if (audioPasosCorrer != null)
+            if (pasoTimer >= correrIntervalo)
             {
-                audioPasosCorrer.clip = sonidoCorrer;
-                audioPasosCorrer.volume = volumenCorrer;
-
-                if (sonidoCorrer != null && !audioPasosCorrer.isPlaying)
-                    audioPasosCorrer.Play();
+                pasoTimer = 0f;
+                SoundManager.PlaySound(SoundType.Correr, volumenCorrer);
             }
         }
         else
@@ -307,13 +310,10 @@ public class PlayerMovement : MonoBehaviour
             if (audioPasosCorrer != null && audioPasosCorrer.isPlaying)
                 audioPasosCorrer.Stop();
 
-            if (audioPasosCaminar != null)
+            if (pasoTimer >= caminarIntervalo)
             {
-                audioPasosCaminar.clip = sonidoCaminar;
-                audioPasosCaminar.volume = volumenCaminar;
-
-                if (sonidoCaminar != null && !audioPasosCaminar.isPlaying)
-                    audioPasosCaminar.Play();
+                pasoTimer = 0f;
+                SoundManager.PlaySound(SoundType.Footstep, volumenCaminar);
             }
         }
     }

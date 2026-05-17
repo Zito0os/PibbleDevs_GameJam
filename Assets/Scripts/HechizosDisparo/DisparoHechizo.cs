@@ -57,6 +57,7 @@ public class DisparoHechizo : MonoBehaviour
 
         Transform spawn = HechizoSpawnPoint != null ? HechizoSpawnPoint : transform;
         var hechizo = Instantiate(prefab, spawn.position, spawn.rotation);
+        SoundManager.PlaySound(SoundType.AttackPrincipal);
         Rigidbody rb = hechizo.GetComponent<Rigidbody>();
         if (rb != null)
         {
