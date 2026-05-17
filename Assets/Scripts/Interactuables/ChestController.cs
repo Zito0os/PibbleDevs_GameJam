@@ -29,6 +29,18 @@ public class ChestController : MonoBehaviour
     private Coroutine autoCloseRoutine;
     private ItemSpawner cachedSpawner;
     private Transform cachedSpawnPoint;
+    private Transform chestPivot;
+    private Vector3 pivotInitialPosition;
+    private Quaternion pivotInitialRotation;
+    private Vector3 pivotInitialScale;
+    private Vector3 chestLocalPosition;
+    private Quaternion chestLocalRotation;
+    private Vector3 chestLocalScale;
+
+    private void Awake()
+    {
+        CreatePivotIfNeeded();
+    }
 
     private void Start()
     {
@@ -44,6 +56,45 @@ public class ChestController : MonoBehaviour
             contents.Add(new ItemStack(ItemType.KeySilver, 1));
             contents.Add(new ItemStack(ItemType.SpellSlow, 2));
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (chestPivot == null)
+            return;
+
+        chestPivot.position = pivotInitialPosition;
+        chestPivot.rotation = pivotInitialRotation;
+        chestPivot.localScale = pivotInitialScale;
+
+        transform.localPosition = chestLocalPosition;
+        transform.localRotation = chestLocalRotation;
+        transform.localScale = chestLocalScale;
+    }
+
+    private void CreatePivotIfNeeded()
+    {
+        if (chestPivot != null)
+            return;
+
+        GameObject pivotObject = new GameObject(gameObject.name + "_Pivot");
+        pivotObject.transform.SetPositionAndRotation(transform.position, transform.rotation);
+        pivotObject.transform.localScale = transform.lossyScale;
+
+        Transform originalParent = transform.parent;
+        pivotObject.transform.SetParent(originalParent, true);
+        transform.SetParent(pivotObject.transform, true);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
+
+        chestPivot = pivotObject.transform;
+        pivotInitialPosition = chestPivot.position;
+        pivotInitialRotation = chestPivot.rotation;
+        pivotInitialScale = chestPivot.localScale;
+        chestLocalPosition = transform.localPosition;
+        chestLocalRotation = transform.localRotation;
+        chestLocalScale = transform.localScale;
     }
 
     // Called by Selected.cs when player presses E
