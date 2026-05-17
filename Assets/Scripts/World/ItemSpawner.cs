@@ -87,6 +87,22 @@ public class ItemSpawner : MonoBehaviour
         return true;
     }
 
+    public bool ForceSpawnItem(ItemType itemType)
+    {
+        EnsureSpawnPoint();
+        if (spawnPoint == null)
+            return false;
+
+        ClearSpawnPoint();
+
+        GameObject prefab = FindPrefabForItem(itemType);
+        if (prefab == null)
+            return false;
+
+        SpawnPrefab(prefab, GetSpawnRotation(prefab));
+        return true;
+    }
+
     private void SpawnPrefab(GameObject prefab, Quaternion rotation)
     {
         if (prefab == null)
@@ -97,6 +113,19 @@ public class ItemSpawner : MonoBehaviour
             return;
 
         Instantiate(prefab, spawnPoint.position, rotation, spawnPoint);
+    }
+
+    private void ClearSpawnPoint()
+    {
+        if (spawnPoint == null)
+            return;
+
+        for (int i = spawnPoint.childCount - 1; i >= 0; i--)
+        {
+            Transform child = spawnPoint.GetChild(i);
+            if (child != null)
+                Destroy(child.gameObject);
+        }
     }
 
     private Quaternion GetSpawnRotation(GameObject prefab)
