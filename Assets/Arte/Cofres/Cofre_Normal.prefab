@@ -137,6 +137,8 @@ MonoBehaviour:
   cambiarLayerAlAbrir: 1
   layerAbierto: Default
   layerCerrado: RayCastDetect
+  cerrarSiVacio: 1
+  tiempoCerrarSiVacio: 5
 --- !u!95 &5308686436438898223
 Animator:
   serializedVersion: 7
@@ -237,9 +239,11 @@ MonoBehaviour:
   - {fileID: 1658067153468728793, guid: e1cba0b04129aec41bd35eaf4d1d7198, type: 3}
   presetPrefab: {fileID: 0}
   cofreRaro: 0
-  spawnChanceNormal: 0.3
-  spawnChanceRare: 0.4
+  spawnChanceNormal: 1
+  spawnChanceRare: 1
   forceSpawn: 0
+  rotateSpellItemsOnSpawn: 1
+  spellSpawnEulerOffset: {x: 0, y: 0, z: -90}
 --- !u!1 &4907700925234761695
 GameObject:
   m_ObjectHideFlags: 0

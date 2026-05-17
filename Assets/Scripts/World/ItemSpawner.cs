@@ -20,6 +20,10 @@ public class ItemSpawner : MonoBehaviour
     [Header("Debug")]
     public bool forceSpawn = false;
 
+    [Header("Spell Rotation")]
+    public bool rotateSpellItemsOnSpawn = true;
+    public Vector3 spellSpawnEulerOffset = new Vector3(0f, 0f, 90f);
+
     public bool IsEmpty
     {
         get
@@ -61,7 +65,7 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
-        Instantiate(prefabToSpawn, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+        SpawnPrefab(prefabToSpawn, GetSpawnRotation(prefabToSpawn));
     }
 
     public bool CanSpawnItem(ItemType itemType)
@@ -79,8 +83,41 @@ public class ItemSpawner : MonoBehaviour
         if (prefab == null)
             return false;
 
-        Instantiate(prefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+        SpawnPrefab(prefab, GetSpawnRotation(prefab));
         return true;
+    }
+
+    private void SpawnPrefab(GameObject prefab, Quaternion rotation)
+    {
+        if (prefab == null)
+            return;
+
+        EnsureSpawnPoint();
+        if (spawnPoint == null)
+            return;
+
+        Instantiate(prefab, spawnPoint.position, rotation, spawnPoint);
+    }
+
+    private Quaternion GetSpawnRotation(GameObject prefab)
+    {
+        Quaternion baseRotation = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
+
+        if (!rotateSpellItemsOnSpawn || prefab == null)
+            return baseRotation;
+
+        ItemPickup pickup = prefab.GetComponent<ItemPickup>();
+        if (pickup == null || !IsSpellItem(pickup.GetItemType()))
+            return baseRotation;
+
+        return baseRotation * Quaternion.Euler(spellSpawnEulerOffset);
+    }
+
+    private bool IsSpellItem(ItemType itemType)
+    {
+        return itemType == ItemType.SpellSlow
+            || itemType == ItemType.SpellFreeze
+            || itemType == ItemType.SpellClear;
     }
 
     private GameObject GetRandomPrefab(GameObject[] pool)
