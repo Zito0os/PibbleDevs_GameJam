@@ -1,52 +1,30 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-
 
 public class PlayerMovement : MonoBehaviour
 {
-
     public CharacterController characterController;
     public float speed = 15f;
-
     public float gravity = -3f;
 
-    //gravedad velocidad
-    Vector3 velocity;
+    private Vector3 velocity;
 
-
-
-
-    //comprobacion de suelo
     public Transform groundCheck;
-
     public float sphereRadius = 0.3f;
-
-    //etiqueta para el suelo, para que el player sepa si esta en el suelo o no
     public LayerMask groundMask;
 
-    bool isGrounded;
+    private bool isGrounded;
 
-
-
-    //salto
     public float jumpheigth = 3f;
 
-
     public bool isSprinting;
-
     public float sprintSpeedMultiplier = 2f;
-
-    private float sprintSpeed = 1;
-
+    private float sprintSpeed = 1f;
 
     public float staminaUseAmount = 5f;
 
     private StaminaBar staminaSlider;
     private Inventory inventory;
-
-
-    //public Animator animator;
+    private MultijugadorPlayerContext playerInputContext;
 
     [Header("Audio pasos")]
     public AudioSource audioPasosCaminar;
@@ -56,65 +34,47 @@ public class PlayerMovement : MonoBehaviour
     [Range(0f, 1f)] public float volumenCaminar = 0.7f;
     [Range(0f, 1f)] public float volumenCorrer = 0.85f;
 
-
-
-    void Start()
+    private void Start()
     {
-        //encontrar la slider de stamina en la escena
-        //como tiene el script stamina bar , lo busca y lo asigna a la variable
-        staminaSlider = FindFirstObjectByType<StaminaBar>();
         inventory = GetComponent<Inventory>();
 
         if (inventory == null)
-        {
             inventory = FindFirstObjectByType<Inventory>();
-        }
+
+        playerInputContext = GetComponent<MultijugadorPlayerContext>();
 
         ConfigurarAudioPasos();
     }
 
+    public void SetInputContext(MultijugadorPlayerContext inputContext)
+    {
+        playerInputContext = inputContext;
+    }
 
-    void Update()
+    public void SetStaminaBar(StaminaBar targetBar)
+    {
+        staminaSlider = targetBar;
+    }
+
+    private void Update()
     {
         if (DoorWheelMinigame.IsRunning)
             return;
 
-        //// Si el EmotePanel est� abierto, no procesar input de movimiento
-        //if (EmotePanel.isEmotePanelActive)
-        //{
-        //    // Mantener la gravedad aunque no se pueda mover
-        //    velocity.y += gravity * Time.deltaTime;
-        //    characterController.Move(velocity * Time.deltaTime);
-        //    return;
-        //}
-
-        //esto es para saber si el player esta en el suelo o no mediante una funcion de unity
-        //CheckSphere crea una esfera en el punto que le digamos, en este caso groundCheck.position
-        isGrounded = Physics.CheckSphere(groundCheck.position, sphereRadius, groundMask);
-
-        if (isGrounded && velocity.y < 0)
+        if (groundCheck != null)
         {
-            //si el player esta en el suelo, la velocidad en y se pone a 0
-            velocity.y = -2f;
+            isGrounded = Physics.CheckSphere(groundCheck.position, sphereRadius, groundMask);
         }
 
+        if (isGrounded && velocity.y < 0f)
+            velocity.y = -2f;
 
-
-        //esto es para el movimiento del player asignacion de teclas de movimiento
-        float x = Input.GetAxis("Horizontal");
-
-        float z = Input.GetAxis("Vertical");
+        Vector2 moveInput = GetMoveInput();
+        float x = moveInput.x;
+        float z = moveInput.y;
 
         bool estaMoviendose = Mathf.Abs(x) > 0.01f || Mathf.Abs(z) > 0.01f;
-
-        //animator.SetFloat("VelX", x);
-        //animator.SetFloat("VelZ", z);
-        //animator.SetBool("isSprinting", isSprinting);
-
-
-        //esto es para mover al jugador adelante o hacia atras 
         Vector3 move = transform.right * x + transform.forward * z;
-
 
         JunpCheck();
         RunCheck();
@@ -123,55 +83,40 @@ public class PlayerMovement : MonoBehaviour
         UseItemCheck();
         ActualizarAudioPasos(estaMoviendose);
 
+        if (characterController != null)
+        {
+            characterController.Move(move * speed * Time.deltaTime * sprintSpeed);
 
-
-        //esto le asigna el movimiento al caracter controler del player 
-        //y le asigna la velocidad que se le dio en el inspector
-        characterController.Move(move * speed * Time.deltaTime * sprintSpeed);
-
-        // si alguien juega a 30 y alguien a 60 fps, el que juega a 30 fps se movera mas lento
-        //por eso se multiplica por Time.deltaTime
-
-
-
-        //para activarle la gravedad 
-        velocity.y += gravity * Time.deltaTime;
-        //esto le asigna la gravedad al player
-        characterController.Move(velocity * Time.deltaTime);
-
-
-
-
+            velocity.y += gravity * Time.deltaTime;
+            characterController.Move(velocity * Time.deltaTime);
+        }
     }
+
+    private Vector2 GetMoveInput()
+    {
+        if (playerInputContext != null)
+            return playerInputContext.Move;
+
+        if (HasMultiplayerContext())
+            return Vector2.zero;
+
+        return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+    }
+
     public void JunpCheck()
     {
+        bool jumpPressed = playerInputContext != null ? playerInputContext.JumpPressedThisFrame : (!HasMultiplayerContext() && Input.GetKeyDown(KeyCode.Space));
 
-        //salto
-
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-
-            //sqrt raiz cuadrada
+        if (jumpPressed && isGrounded)
             velocity.y = Mathf.Sqrt(jumpheigth * -2f * gravity);
-            //animator.SetBool("isJumping", true);
-        }
-        //para que cuando caiga no se quede el bool en true
-        if (!isGrounded)
-        {
-            //animator.SetBool("isJumping", false);
-        }
     }
 
     public void RunCheck()
     {
-
-        // Hold LeftShift to sprint, release to stop. Consume stamina continuously while held.
-        bool holdSprint = Input.GetKey(KeyCode.LeftShift);
+        bool holdSprint = playerInputContext != null ? playerInputContext.SprintHeld : (!HasMultiplayerContext() && Input.GetKey(KeyCode.LeftShift));
 
         if (holdSprint && !isSprinting)
-        {
             isSprinting = true;
-        }
 
         if (!holdSprint && isSprinting)
         {
@@ -184,23 +129,19 @@ public class PlayerMovement : MonoBehaviour
         {
             sprintSpeed = sprintSpeedMultiplier;
             if (staminaSlider != null)
-            {
-                // consume per second
                 staminaSlider.UseStamina(staminaUseAmount * Time.deltaTime);
-            }
         }
         else
         {
-            sprintSpeed = 1;
+            sprintSpeed = 1f;
         }
     }
 
     private void UseItemCheck()
     {
-        if (!Input.GetMouseButtonDown(0))
-            return;
+        bool attackPressed = playerInputContext != null ? playerInputContext.AttackPressedThisFrame : (!HasMultiplayerContext() && Input.GetMouseButtonDown(0));
 
-        if (inventory == null)
+        if (!attackPressed || inventory == null)
             return;
 
         if (!EsHechizoInventario(inventory.activeItemType))
@@ -208,9 +149,7 @@ public class PlayerMovement : MonoBehaviour
 
         bool used = inventory.UseSelectedItem();
         if (used)
-        {
             Debug.Log($"PlayerMovement: item usado con click izquierdo desde slot {inventory.activeSlotIndex + 1}.");
-        }
     }
 
     private bool EsHechizoInventario(ItemType itemType)
@@ -220,10 +159,18 @@ public class PlayerMovement : MonoBehaviour
             || itemType == ItemType.SpellClear;
     }
 
-
     private void SelectInventorySlotCheck()
     {
         if (inventory == null)
+            return;
+
+        if (playerInputContext != null && playerInputContext.TryGetDirectSlotSelection(out int directSlot))
+        {
+            inventory.SetActiveSlot(directSlot);
+            return;
+        }
+
+        if (HasMultiplayerContext())
             return;
 
         if (Input.GetKeyDown(KeyCode.Alpha1)) inventory.SetActiveSlot(0);
@@ -238,35 +185,38 @@ public class PlayerMovement : MonoBehaviour
         if (inventory == null)
             return;
 
+        if (playerInputContext != null && !playerInputContext.IsKeyboardMouse)
+        {
+            if (playerInputContext.CyclePreviousPressedThisFrame)
+                inventory.SetActiveSlot(inventory.activeSlotIndex - 1);
+            else if (playerInputContext.CycleNextPressedThisFrame)
+                inventory.SetActiveSlot(inventory.activeSlotIndex + 1);
+
+            return;
+        }
+
+        if (HasMultiplayerContext())
+            return;
+
         float scroll = Input.mouseScrollDelta.y;
         if (scroll > 0f)
-        {
             inventory.SetActiveSlot(inventory.activeSlotIndex - 1);
-        }
         else if (scroll < 0f)
-        {
             inventory.SetActiveSlot(inventory.activeSlotIndex + 1);
-        }
     }
 
-
-    public void Barrido()
+    private bool HasMultiplayerContext()
     {
-
-
+        return GetComponent<MultijugadorPlayerContext>() != null;
     }
 
     private void ConfigurarAudioPasos()
     {
         if (audioPasosCaminar == null)
-        {
             audioPasosCaminar = gameObject.AddComponent<AudioSource>();
-        }
 
         if (audioPasosCorrer == null)
-        {
             audioPasosCorrer = gameObject.AddComponent<AudioSource>();
-        }
 
         audioPasosCaminar.playOnAwake = false;
         audioPasosCaminar.loop = true;
@@ -323,7 +273,4 @@ public class PlayerMovement : MonoBehaviour
             }
         }
     }
-
-
-
 }

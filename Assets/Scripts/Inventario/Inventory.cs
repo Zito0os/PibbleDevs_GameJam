@@ -6,7 +6,7 @@ using System.Linq;
 public class Inventory : MonoBehaviour
 {
     [SerializeField] private int maxSlots = 5;  // máximo de tipos distintos de items
-    [SerializeField] public int activeSlotIndex = 0;
+    [SerializeField] public int activeSlotIndex = -1;
     [SerializeField] public bool hasActiveItem = false;
     [SerializeField] public ItemType activeItemType;
     [SerializeField] public string activeItemName = "None";
@@ -116,7 +116,7 @@ public class Inventory : MonoBehaviour
 
     public void SetActiveSlot(int slotIndex)
     {
-        activeSlotIndex = Mathf.Clamp(slotIndex, 0, maxSlots - 1);
+        activeSlotIndex = slotIndex < 0 ? -1 : Mathf.Clamp(slotIndex, 0, maxSlots - 1);
         UpdateActiveSelectionState();
         OnInventoryChanged?.Invoke();
     }
@@ -159,11 +159,15 @@ public class Inventory : MonoBehaviour
     {
         if (itemStacks.Count == 0)
         {
-            activeSlotIndex = 0;
+            activeSlotIndex = -1;
             return;
         }
 
-        activeSlotIndex = Mathf.Clamp(activeSlotIndex, 0, Mathf.Min(itemStacks.Count - 1, maxSlots - 1));
+        if (activeSlotIndex < 0)
+            return;
+
+        if (activeSlotIndex >= itemStacks.Count)
+            activeSlotIndex = -1;
     }
 
     private void UpdateActiveSelectionState()
@@ -202,7 +206,7 @@ public class Inventory : MonoBehaviour
 
         itemStacks.Clear();
         Debug.Log("Inventory: vaciado completamente.");
-        activeSlotIndex = 0;
+        activeSlotIndex = -1;
         UpdateActiveSelectionState();
         OnInventoryChanged?.Invoke();
     }

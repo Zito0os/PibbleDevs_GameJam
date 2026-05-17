@@ -19,52 +19,62 @@ public class StaminaBar : MonoBehaviour
 
     private float losingStaminaTime = 0.1f;
 
-    private Coroutine myCoroutineLosing;
     private Coroutine myCoroutineRegenerate;
+    private PlayerMovement ownerPlayer;
 
 
     void Start()
     {
+        if (ownerPlayer == null)
+        {
+            ownerPlayer = GetComponentInParent<PlayerMovement>();
+            if (ownerPlayer == null)
+                ownerPlayer = FindFirstObjectByType<PlayerMovement>();
+        }
+
         currentStamina = maxStamina;
         staminaSlider.maxValue = maxStamina;
         staminaSlider.value = maxStamina;
     }
 
+    public void ConfigureForPlayer(PlayerMovement targetPlayer)
+    {
+        ownerPlayer = targetPlayer;
+    }
+
 
     public void UseStamina(float amount)
     {
-        if (currentStamina - amount > 0)
+        if (amount <= 0f)
+            return;
+
+        if (myCoroutineRegenerate != null)
         {
-            //por si ya hasy una corutina activa para perder stamina, la paras
-            if (myCoroutineLosing != null)
-            {
-                StopCoroutine(myCoroutineLosing);
-            }
-            //detener regeneración si estaba activa
-            if (myCoroutineRegenerate != null)
-            {
-                StopCoroutine(myCoroutineRegenerate);
-                myCoroutineRegenerate = null;
-            }
-            //co-rutinas
-            //iniciar corutina para perder stamina
-            myCoroutineLosing = StartCoroutine(LosingStaminaCoroutine(amount));
+            StopCoroutine(myCoroutineRegenerate);
+            myCoroutineRegenerate = null;
         }
-        else
+
+        currentStamina = Mathf.Max(currentStamina - amount, 0f);
+
+        if (staminaSlider != null)
+            staminaSlider.value = currentStamina;
+
+        if (currentStamina <= 0f)
         {
             Debug.Log("No hay stamina");
-            FindFirstObjectByType<PlayerMovement>().isSprinting = false;
+            if (ownerPlayer != null)
+                ownerPlayer.isSprinting = false;
+
+            if (myCoroutineRegenerate != null)
+                StopCoroutine(myCoroutineRegenerate);
+
+            myCoroutineRegenerate = StartCoroutine(RegenerateStaminaCoroutineStart());
         }
     }
 
     public void StopSprinting()
     {
-        if (myCoroutineLosing != null)
-        {
-            StopCoroutine(myCoroutineLosing);
-            myCoroutineLosing = null;
-        }
-        //Iniciar regeneración cuando se detiene el sprint
+        //Iniciar regeneraciï¿½n cuando se detiene el sprint
         if (myCoroutineRegenerate != null)
         {
             StopCoroutine(myCoroutineRegenerate);
@@ -81,7 +91,7 @@ public class StaminaBar : MonoBehaviour
         {
             //darle la stamina poco a poco
             currentStamina += regeneratesAmount;
-            currentStamina = Mathf.Min(currentStamina, maxStamina); //No superar el máximo
+            currentStamina = Mathf.Min(currentStamina, maxStamina); //No superar el mï¿½ximo
             //ponerle el valor a la barra de stamina 
             staminaSlider.value = currentStamina;
 
@@ -90,34 +100,6 @@ public class StaminaBar : MonoBehaviour
         }
         myCoroutineRegenerate = null;
 
-    }
-
-
-    private IEnumerator LosingStaminaCoroutine(float amount)
-    {
-        while (currentStamina > 0)
-        {
-            //ir perdiendo stamina poco a poco
-            currentStamina -= amount;
-            currentStamina = Mathf.Max(currentStamina, 0); //Asegura que no baje de 0
-
-            //actualizar barra de stamina
-            staminaSlider.value = currentStamina;
-
-            //esperar un tiempo para la proxima perdida de stamina
-            yield return new WaitForSeconds(losingStaminaTime);
-            //de esta manera perdemos stamina cada 0.1 segundos dependiendo 
-        }
-
-        myCoroutineLosing = null;
-        //este script es el que maneja lo de correr accedemos el que tiene ese archivo para que deje de correr
-        FindFirstObjectByType<PlayerMovement>().isSprinting = false;
-        //Iniciar regeneración automática cuando se agota la stamina
-        if (myCoroutineRegenerate != null)
-        {
-            StopCoroutine(myCoroutineRegenerate);
-        }
-        myCoroutineRegenerate = StartCoroutine(RegenerateStaminaCoroutineStart());
     }
 
 

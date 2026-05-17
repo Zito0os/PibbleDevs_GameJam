@@ -35,6 +35,7 @@ public class Door_Controller : MonoBehaviour
     private bool isRunningSequence = false;
     private InventoryUI cachedInventoryUI;
     private DoorWheelMinigame cachedWheelMinigame;
+    private PlayerMovement currentInteractorPlayer;
 
     private void Awake()
     {
@@ -86,6 +87,8 @@ public class Door_Controller : MonoBehaviour
 
     public void AbrirCofre(PlayerMovement player)
     {
+        currentInteractorPlayer = player;
+
         if (debugDoorLogs)
         {
             Debug.Log("[Door] Input recibido -> puerta=" + name + " | isRunningSequence=" + isRunningSequence + " | CofreAbierto=" + CofreAbierto);
@@ -262,6 +265,8 @@ public class Door_Controller : MonoBehaviour
 
     public void ResolveWheelSuccess(PlayerMovement player, ItemType keyType)
     {
+        currentInteractorPlayer = player;
+
         if (player == null)
             return;
 
@@ -280,6 +285,8 @@ public class Door_Controller : MonoBehaviour
 
     public void ResolveWheelFailure(PlayerMovement player, ItemType keyType)
     {
+        currentInteractorPlayer = player;
+
         if (player != null)
         {
             Inventory inventory = player.GetComponent<Inventory>();
@@ -336,6 +343,16 @@ public class Door_Controller : MonoBehaviour
 
     private void ShowDoorMessage(string message)
     {
+        if (currentInteractorPlayer != null)
+        {
+            MultijugadorPlayerHUD hud = currentInteractorPlayer.GetComponent<MultijugadorPlayerHUD>();
+            if (hud != null && hud.inventoryUI != null)
+            {
+                hud.inventoryUI.SetDoorMessage(message);
+                return;
+            }
+        }
+
         InventoryUI inventoryUI = GetInventoryUI();
         if (inventoryUI != null)
         {
