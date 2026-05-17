@@ -15,6 +15,8 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isGrounded;
 
+    public Animator animator;
+
     public float jumpheigth = 3f;
 
     public bool isSprinting;
@@ -76,6 +78,9 @@ public class PlayerMovement : MonoBehaviour
 
         bool estaMoviendose = Mathf.Abs(x) > 0.01f || Mathf.Abs(z) > 0.01f;
         Vector3 move = transform.right * x + transform.forward * z;
+        animator.SetFloat("VelX", x);
+        animator.SetFloat("VelZ", z);
+        
 
         JunpCheck();
         RunCheck();
@@ -115,15 +120,18 @@ public class PlayerMovement : MonoBehaviour
     public void RunCheck()
     {
         bool holdSprint = playerInputContext != null ? playerInputContext.SprintHeld : (!HasMultiplayerContext() && Input.GetKey(KeyCode.LeftShift));
+        
 
         if (holdSprint && !isSprinting)
             isSprinting = true;
+        animator.SetBool("isSprinting", isSprinting);
 
         if (!holdSprint && isSprinting)
         {
             isSprinting = false;
             if (staminaSlider != null)
                 staminaSlider.StopSprinting();
+            animator.SetBool("isSprinting", isSprinting);
         }
 
         if (isSprinting)
@@ -136,6 +144,8 @@ public class PlayerMovement : MonoBehaviour
         {
             sprintSpeed = 1f;
         }
+
+        
     }
 
     private void UseItemCheck()
