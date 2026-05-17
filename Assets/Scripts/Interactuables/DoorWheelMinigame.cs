@@ -43,6 +43,9 @@ public class DoorWheelMinigame : MonoBehaviour
     private GameObject interactPromptObject = null;
     private bool? cachedInteractPromptActive = null;
 
+    private const string KeyboardWheelText = "Pulsa SPACE para detener la rueda";
+    private const string ControllerWheelText = "Pulsa A para detener la rueda";
+
     private void Awake()
     {
         if (instance == null)
@@ -113,7 +116,7 @@ public class DoorWheelMinigame : MonoBehaviour
         SetPanelVisible(true);
         SetInputBlocked(true);
 
-        ShowMessage("Pulsa SPACE para detener la rueda");
+        ShowMessage(GetWheelStopText());
         return true;
     }
 
@@ -324,6 +327,13 @@ public class DoorWheelMinigame : MonoBehaviour
         {
             Debug.Log(message);
         }
+    }
+
+    private string GetWheelStopText()
+    {
+        return currentInputContext != null && !currentInputContext.IsKeyboardMouse
+            ? ControllerWheelText
+            : KeyboardWheelText;
     }
 
     private Camera GetUICamera()

@@ -189,9 +189,33 @@ public class Selected : MonoBehaviour
     private void SetInteractPromptVisible(bool visible)
     {
         if (runtimeInteractPrompt != null)
+        {
+            TMPro.TextMeshProUGUI promptText = runtimeInteractPrompt.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
+            if (promptText != null)
+            {
+                promptText.text = GetInteractPromptText();
+            }
+
             runtimeInteractPrompt.SetActive(visible);
+        }
         else if (TextDetect != null)
+        {
+            TMPro.TextMeshProUGUI promptText = TextDetect.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
+            if (promptText != null)
+            {
+                promptText.text = GetInteractPromptText();
+            }
+
             TextDetect.SetActive(visible);
+        }
+    }
+
+    private string GetInteractPromptText()
+    {
+        if (playerInputContext != null && !playerInputContext.IsKeyboardMouse)
+            return "Pulsa Y para interactuar";
+
+        return "Presiona E para interactuar";
     }
 
     private void RefreshInputContext()

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class EventManager : MonoBehaviour
 {
@@ -13,6 +14,12 @@ public class EventManager : MonoBehaviour
 	public Door_Controller Puerta_Ganadora;
 	public string nombreCampeona = string.Empty;
 	public bool partidaTerminada = false;
+
+	[Header("Key Found")]
+	public bool llaveDoradaEncontrada = false;
+	public float tiempoMostrarLlaveEncontrada = 3f;
+
+	private Coroutine llaveEncontradaRoutine;
 
 	[Header("Debug")]
 	public bool debugLogs = true;
@@ -98,6 +105,59 @@ public class EventManager : MonoBehaviour
 
 		if (debugLogs)
 			Debug.Log("EventManager: victoria de " + nombreCampeona + " al abrir " + door.name);
+	}
+
+	public void NotifyGoldenKeyFound(PlayerMovement player)
+	{
+		if (player == null || llaveDoradaEncontrada)
+			return;
+
+		llaveDoradaEncontrada = true;
+
+		ShowKeyFoundOverlayForPlayer(jugador1);
+		ShowKeyFoundOverlayForPlayer(jugador2);
+
+		if (llaveEncontradaRoutine != null)
+		{
+			StopCoroutine(llaveEncontradaRoutine);
+		}
+
+		llaveEncontradaRoutine = StartCoroutine(HideKeyFoundOverlayAfterDelay());
+
+		if (debugLogs)
+			Debug.Log("EventManager: llave dorada encontrada por " + player.gameObject.name);
+	}
+
+	private void ShowKeyFoundOverlayForPlayer(PlayerMovement player)
+	{
+		ShowKeyFoundOverlayForPlayer(player, true);
+	}
+
+	private IEnumerator HideKeyFoundOverlayAfterDelay()
+	{
+		float delay = Mathf.Max(0f, tiempoMostrarLlaveEncontrada);
+		yield return new WaitForSeconds(delay);
+
+		SetKeyFoundOverlayVisible(false);
+		llaveEncontradaRoutine = null;
+	}
+
+	private void SetKeyFoundOverlayVisible(bool visible)
+	{
+		ShowKeyFoundOverlayForPlayer(jugador1, visible);
+		ShowKeyFoundOverlayForPlayer(jugador2, visible);
+	}
+
+	private void ShowKeyFoundOverlayForPlayer(PlayerMovement player, bool visible)
+	{
+		if (player == null)
+			return;
+
+		MultijugadorPlayerHUD hud = player.GetComponent<MultijugadorPlayerHUD>();
+		if (hud == null)
+			return;
+
+		hud.SetLlaveEncontradaVisible(visible);
 	}
 
 }

@@ -299,13 +299,18 @@ public class MultijugadorManager : MonoBehaviour
 
         RawImage miniMapImage = FindChildRawImage(hudRoot.transform, "MiniMapa");
         GameObject interactPrompt = FindChildGameObject(hudRoot.transform, "Interactuar");
+        GameObject llaveEncontrada = FindChildGameObjectByAnyName(hudRoot.transform,
+            "Llave_econtrada",
+            "Llave_encontrada",
+            "Llave encontrada",
+            "LlaveEncontrada");
         ConfigureMinimap(minimapCamera, miniMapImage, hudRoot.name);
 
         MultijugadorPlayerHUD hudLink = playerObject.GetComponent<MultijugadorPlayerHUD>();
         if (hudLink == null)
             hudLink = playerObject.AddComponent<MultijugadorPlayerHUD>();
 
-        hudLink.Bind(hudCanvas, inventoryUI, staminaBar, miniMapImage, minimapCamera, interactPrompt);
+        hudLink.Bind(hudCanvas, inventoryUI, staminaBar, miniMapImage, minimapCamera, interactPrompt, llaveEncontrada);
 
         if (isPrimaryHud)
         {
@@ -373,6 +378,32 @@ public class MultijugadorManager : MonoBehaviour
         {
             if (child.name == targetName)
                 return child.gameObject;
+        }
+
+        return null;
+    }
+
+    private GameObject FindChildGameObjectByAnyName(Transform root, params string[] targetNames)
+    {
+        if (root == null || targetNames == null)
+            return null;
+
+        Transform[] children = root.GetComponentsInChildren<Transform>(true);
+        foreach (Transform child in children)
+        {
+            if (child == null)
+                continue;
+
+            string childName = child.name;
+            for (int i = 0; i < targetNames.Length; i++)
+            {
+                string targetName = targetNames[i];
+                if (string.IsNullOrEmpty(targetName))
+                    continue;
+
+                if (string.Equals(childName, targetName, System.StringComparison.OrdinalIgnoreCase))
+                    return child.gameObject;
+            }
         }
 
         return null;

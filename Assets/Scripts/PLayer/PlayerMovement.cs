@@ -126,10 +126,16 @@ public class PlayerMovement : MonoBehaviour
     public void RunCheck()
     {
         bool holdSprint = playerInputContext != null ? playerInputContext.SprintHeld : (!HasMultiplayerContext() && Input.GetKey(KeyCode.LeftShift));
+
+        bool canSprint = staminaSlider == null || staminaSlider.HasStamina;
         
 
-        if (holdSprint && !isSprinting)
+        if (holdSprint && !isSprinting && canSprint)
             isSprinting = true;
+
+        if (!canSprint && isSprinting)
+            isSprinting = false;
+
         animator.SetBool("isSprinting", isSprinting);
 
         if (!holdSprint && isSprinting)

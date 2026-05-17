@@ -50,6 +50,16 @@ public class ItemPickup : MonoBehaviour
         {
             isPickedUp = true;
             Debug.Log($"ItemPickup: {itemType} x{quantity} recogido.");
+
+            if (itemType == ItemType.KeyGold)
+            {
+                EventManager eventManager = EventManager.Instance != null ? EventManager.Instance : FindFirstObjectByType<EventManager>();
+                if (eventManager != null)
+                {
+                    eventManager.NotifyGoldenKeyFound(player);
+                }
+            }
+
             ChestController chest = GetComponentInParent<ChestController>();
             if (chest != null)
             {

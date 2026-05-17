@@ -22,6 +22,9 @@ public class StaminaBar : MonoBehaviour
     private Coroutine myCoroutineRegenerate;
     private PlayerMovement ownerPlayer;
 
+    public bool HasStamina => currentStamina > 0f;
+    public float CurrentStamina => currentStamina;
+
 
     void Start()
     {

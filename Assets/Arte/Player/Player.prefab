@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   characterController: {fileID: 6891428742374994243}
-  speed: 10
+  speed: 6
   gravity: -3
   groundCheck: {fileID: 1995125947115081746}
   sphereRadius: 0.3
@@ -422,7 +422,7 @@ MonoBehaviour:
   jumpheigth: 3
   isSprinting: 0
   sprintSpeedMultiplier: 2.5
-  staminaUseAmount: 2
+  staminaUseAmount: 15
   attackAnimationBoolName: Atack
   attackAnimationHoldTime: 0.15
   audioPasosCaminar: {fileID: 0}
@@ -431,6 +431,8 @@ MonoBehaviour:
   sonidoCorrer: {fileID: 0}
   volumenCaminar: 0.7
   volumenCorrer: 0.85
+  caminarIntervalo: 0.45
+  correrIntervalo: 0.3
 --- !u!143 &6891428742374994243
 CharacterController:
   m_ObjectHideFlags: 0
