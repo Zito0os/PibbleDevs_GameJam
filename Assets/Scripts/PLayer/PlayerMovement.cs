@@ -159,12 +159,17 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         // Hechizos se consumen en DisparoHechizo.cs
-        if (EsHechizoInventario(inventory.activeItemType))
+        if (EsHechizoInventario(inventory.activeItemType) || EsLlaveInventario(inventory.activeItemType))
             return;
 
         bool used = inventory.UseSelectedItem();
         if (used)
             Debug.Log($"PlayerMovement: item usado con click izquierdo desde slot {inventory.activeSlotIndex + 1}.");
+    }
+
+    private bool EsLlaveInventario(ItemType itemType)
+    {
+        return itemType == ItemType.KeyGold || itemType == ItemType.KeySilver;
     }
 
     private bool EsHechizoInventario(ItemType itemType)

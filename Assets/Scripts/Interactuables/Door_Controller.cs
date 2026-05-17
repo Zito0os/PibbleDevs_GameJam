@@ -17,6 +17,9 @@ public class Door_Controller : MonoBehaviour
     public bool requiereLlave = false;
     public ItemType llaveRequerida = ItemType.KeySilver;
 
+    [Header("Victory")]
+    public bool Puerta_Ganadora = false;
+
     private const string ParamAbriendoPuerta = "abriendo_puerta";
     private const string ParamPuertaAbierta = "puerta_abierta";
     private const string ParamCerrandoPuerta = "cerrando_puerta";
@@ -277,6 +280,12 @@ public class Door_Controller : MonoBehaviour
         if (inventory.hasActiveItem && inventory.activeItemType == keyType)
         {
             inventory.UseSelectedItem();
+        }
+
+        EventManager eventManager = EventManager.Instance != null ? EventManager.Instance : FindFirstObjectByType<EventManager>();
+        if (eventManager != null)
+        {
+            eventManager.NotifyGoldenDoorOpened(this, player);
         }
 
         ShowDoorMessage("Puerta abierta");
