@@ -46,7 +46,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DisparoHechizo
   HechizoSpawnPoint: {fileID: 3521676822752899015}
   HechizoPrefab: {fileID: 7700642936372213891, guid: 18be81955f2d925438bc7c873d04e297, type: 3}
-  HechizoSpeed: 10
+  spellSlowPrefab: {fileID: 7700642936372213891, guid: 6f04cd1b0496b3d49b05694c5e869e18, type: 3}
+  spellFreezePrefab: {fileID: 7700642936372213891, guid: 18be81955f2d925438bc7c873d04e297, type: 3}
+  spellClearPrefab: {fileID: 7700642936372213891, guid: 149fd174379abbc43bc794a629279a3d, type: 3}
+  HechizoSpeed: 25
 --- !u!1 &7236141085511554284
 GameObject:
   m_ObjectHideFlags: 0

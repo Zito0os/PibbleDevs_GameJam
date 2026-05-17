@@ -15,8 +15,10 @@ GameObject:
   - component: {fileID: 7655933716134516628}
   - component: {fileID: 4599965768211548589}
   - component: {fileID: -71249435074187203}
+  - component: {fileID: -2970820797742158136}
+  - component: {fileID: 4108618437321857372}
   m_Layer: 0
-  m_Name: Kikoken
+  m_Name: Freeze
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -325,9 +327,46 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7700642936372213891}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4205f5100b8176d41a57ffa2f9ee2499, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SingleHechizo
   lifetime: 5
+--- !u!114 &-2970820797742158136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7700642936372213891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59dbe0e28cf9b3644bad0190863709fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpellProjectile
+  effectType: 1
+  slowMultiplier: 0.6
+  slowDuration: 7
+  freezeDuration: 10
+--- !u!135 &4108618437321857372
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7700642936372213891}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}

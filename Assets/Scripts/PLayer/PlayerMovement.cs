@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -144,7 +145,8 @@ public class PlayerMovement : MonoBehaviour
         if (!attackPressed || inventory == null)
             return;
 
-        if (!EsHechizoInventario(inventory.activeItemType))
+        // Hechizos se consumen en DisparoHechizo.cs
+        if (EsHechizoInventario(inventory.activeItemType))
             return;
 
         bool used = inventory.UseSelectedItem();
@@ -208,6 +210,38 @@ public class PlayerMovement : MonoBehaviour
     private bool HasMultiplayerContext()
     {
         return GetComponent<MultijugadorPlayerContext>() != null;
+    }
+
+    public void ApplySlow(float multiplier, float duration)
+    {
+        StartCoroutine(ApplySlowRoutine(multiplier, duration));
+    }
+
+    public void ApplyFreeze(float duration)
+    {
+        StartCoroutine(ApplyFreezeRoutine(duration));
+    }
+
+    public void ClearInventoryFromSpell()
+    {
+        if (inventory != null)
+            inventory.Clear();
+    }
+
+    private IEnumerator ApplySlowRoutine(float multiplier, float duration)
+    {
+        float originalSpeed = speed;
+        speed = originalSpeed * Mathf.Clamp(multiplier, 0.05f, 1f);
+        yield return new WaitForSeconds(duration);
+        speed = originalSpeed;
+    }
+
+    private IEnumerator ApplyFreezeRoutine(float duration)
+    {
+        float originalSpeed = speed;
+        speed = 0f;
+        yield return new WaitForSeconds(duration);
+        speed = originalSpeed;
     }
 
     private void ConfigurarAudioPasos()

@@ -4,6 +4,10 @@ public class DisparoHechizo : MonoBehaviour
 {
     public Transform HechizoSpawnPoint;
     public GameObject HechizoPrefab;
+    [Header("Spell Prefabs")]
+    public GameObject spellSlowPrefab;
+    public GameObject spellFreezePrefab;
+    public GameObject spellClearPrefab;
     public float HechizoSpeed = 10f;
     private Inventory inventory;
     private MultijugadorPlayerContext playerInputContext;
@@ -44,11 +48,26 @@ public class DisparoHechizo : MonoBehaviour
             return;
 
         //Disparar con el botón de ataque del jugador
-        if (HechizoPrefab != null && HechizoSpawnPoint != null)
-        {
-            var hechizo = Instantiate(HechizoPrefab, HechizoSpawnPoint.position, HechizoSpawnPoint.rotation);
-            hechizo.GetComponent<Rigidbody>().linearVelocity = HechizoSpawnPoint.forward * HechizoSpeed;
+        GameObject prefab = ResolveSpellPrefab(inventory.activeItemType);
+        if (prefab == null)
+            return;
 
+        if (!inventory.UseSelectedItem())
+            return;
+
+        Transform spawn = HechizoSpawnPoint != null ? HechizoSpawnPoint : transform;
+        var hechizo = Instantiate(prefab, spawn.position, spawn.rotation);
+        Rigidbody rb = hechizo.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = spawn.forward * HechizoSpeed;
+        }
+
+        SpellProjectile projectile = hechizo.GetComponent<SpellProjectile>();
+        if (projectile != null)
+        {
+            projectile.SetOwner(transform);
+            projectile.ConfigureFromItem(inventory.activeItemType);
         }
     }
 
@@ -57,6 +76,21 @@ public class DisparoHechizo : MonoBehaviour
         return itemType == ItemType.SpellSlow
             || itemType == ItemType.SpellFreeze
             || itemType == ItemType.SpellClear;
+    }
+
+    private GameObject ResolveSpellPrefab(ItemType itemType)
+    {
+        switch (itemType)
+        {
+            case ItemType.SpellSlow:
+                return spellSlowPrefab != null ? spellSlowPrefab : HechizoPrefab;
+            case ItemType.SpellFreeze:
+                return spellFreezePrefab != null ? spellFreezePrefab : HechizoPrefab;
+            case ItemType.SpellClear:
+                return spellClearPrefab != null ? spellClearPrefab : HechizoPrefab;
+            default:
+                return null;
+        }
     }
 }
 
