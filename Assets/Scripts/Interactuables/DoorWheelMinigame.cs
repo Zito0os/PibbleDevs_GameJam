@@ -15,7 +15,7 @@ public class DoorWheelMinigame : MonoBehaviour
     [SerializeField] private Canvas canvas;
 
     [Header("Auto Find")]
-    [SerializeField] private string mainCanvasName = "MAIN_CANVA";
+    [SerializeField] private string mainCanvasName = MultijugadorUIConstants.MainCanvasRootName;
     [SerializeField] private string wheelPanelName = "Rueda";
     [SerializeField] private string spinningWheelName = "Rueda";
     [SerializeField] private string metaName = "meta";
@@ -32,6 +32,7 @@ public class DoorWheelMinigame : MonoBehaviour
     private InventoryUI inventoryUI;
     private Door_Controller currentDoor;
     private PlayerMovement currentPlayer;
+    private MultijugadorPlayerContext currentInputContext;
     private ItemType requiredKey;
     private bool isRunning;
     private bool isSpinning;
@@ -39,9 +40,8 @@ public class DoorWheelMinigame : MonoBehaviour
     private float currentAngle;
     private bool previousCursorVisible;
     private CursorLockMode previousCursorLockState;
-    // cached reference to the TMP that shows "Interactuar"
-    private TextMeshProUGUI interactuarTMP = null;
-    private bool? cachedInteractuarActive = null;
+    private GameObject interactPromptObject = null;
+    private bool? cachedInteractPromptActive = null;
 
     private void Awake()
     {
@@ -69,7 +69,9 @@ public class DoorWheelMinigame : MonoBehaviour
             spinningWheel.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        bool stopPressed = currentInputContext != null ? currentInputContext.JumpPressedThisFrame : Input.GetKeyDown(KeyCode.Space);
+
+        if (stopPressed)
         {
             StopAndEvaluate();
         }
@@ -83,12 +85,15 @@ public class DoorWheelMinigame : MonoBehaviour
         if (isRunning)
             return false;
 
-        BindReferences();
-
         currentDoor = door;
         currentPlayer = player;
+        currentInputContext = player != null ? player.GetComponent<MultijugadorPlayerContext>() : null;
         requiredKey = keyType;
         attemptsLeft = Mathf.Max(1, maxAttempts);
+
+        ResetRuntimeReferences();
+
+        BindReferences();
 
         if (!HasValidReferences())
         {
@@ -209,6 +214,7 @@ public class DoorWheelMinigame : MonoBehaviour
 
         currentDoor = null;
         currentPlayer = null;
+        currentInputContext = null;
         requiredKey = ItemType.None;
     }
 
@@ -226,6 +232,13 @@ public class DoorWheelMinigame : MonoBehaviour
             if (playerMovement != null)
                 playerMovement.enabled = !blocked;
 
+            DisparoHechizo spellShooter = currentPlayer.GetComponentInChildren<DisparoHechizo>(true);
+            if (spellShooter == null)
+                spellShooter = currentPlayer.GetComponent<DisparoHechizo>();
+
+            if (spellShooter != null)
+                spellShooter.enabled = !blocked;
+
             Cameralook cameraLook = currentPlayer.GetComponentInChildren<Cameralook>(true);
             if (cameraLook == null)
                 cameraLook = currentPlayer.GetComponent<Cameralook>();
@@ -241,40 +254,25 @@ public class DoorWheelMinigame : MonoBehaviour
         if (selected != null)
             selected.enabled = !blocked;
 
-        // hide or restore the "Interactuar" TextMeshPro inside Interactuable-Widget
+        MultijugadorPlayerHUD hud = currentPlayer != null ? currentPlayer.GetComponent<MultijugadorPlayerHUD>() : null;
+        interactPromptObject = hud != null ? hud.interactPrompt : null;
+
         if (blocked)
         {
-            if (interactuarTMP == null)
+            if (interactPromptObject != null)
             {
-                GameObject widget = GameObject.Find("Interactuable-Widget");
-                if (widget != null)
-                {
-                    TextMeshProUGUI[] tms = widget.GetComponentsInChildren<TextMeshProUGUI>(true);
-                    foreach (var t in tms)
-                    {
-                        if (t != null && t.name == "Interactuar")
-                        {
-                            interactuarTMP = t;
-                            break;
-                        }
-                    }
-                }
-            }
+                if (!cachedInteractPromptActive.HasValue)
+                    cachedInteractPromptActive = interactPromptObject.activeSelf;
 
-            if (interactuarTMP != null)
-            {
-                if (!cachedInteractuarActive.HasValue)
-                    cachedInteractuarActive = interactuarTMP.gameObject.activeSelf;
-
-                interactuarTMP.gameObject.SetActive(false);
+                interactPromptObject.SetActive(false);
             }
         }
         else
         {
-            if (interactuarTMP != null && cachedInteractuarActive.HasValue)
+            if (interactPromptObject != null && cachedInteractPromptActive.HasValue)
             {
-                interactuarTMP.gameObject.SetActive(cachedInteractuarActive.Value);
-                cachedInteractuarActive = null;
+                interactPromptObject.SetActive(cachedInteractPromptActive.Value);
+                cachedInteractPromptActive = null;
             }
         }
 
@@ -303,6 +301,16 @@ public class DoorWheelMinigame : MonoBehaviour
 
     private void ShowMessage(string message)
     {
+        if (currentPlayer != null)
+        {
+            MultijugadorPlayerHUD hud = currentPlayer.GetComponent<MultijugadorPlayerHUD>();
+            if (hud != null && hud.inventoryUI != null)
+            {
+                hud.inventoryUI.SetDoorMessage(message);
+                return;
+            }
+        }
+
         if (inventoryUI == null)
         {
             inventoryUI = FindFirstObjectByType<InventoryUI>();
@@ -330,6 +338,20 @@ public class DoorWheelMinigame : MonoBehaviour
 
     private void BindReferences()
     {
+        Canvas playerCanvas = null;
+
+        if (currentPlayer != null)
+        {
+            MultijugadorPlayerHUD hud = currentPlayer.GetComponent<MultijugadorPlayerHUD>();
+            if (hud != null && hud.hudCanvas != null)
+            {
+                canvas = hud.hudCanvas;
+                playerCanvas = hud.hudCanvas;
+                if (hud.inventoryUI != null)
+                    inventoryUI = hud.inventoryUI;
+            }
+        }
+
         if (canvas == null)
         {
             GameObject mainCanvas = GameObject.Find(mainCanvasName);
@@ -339,9 +361,19 @@ public class DoorWheelMinigame : MonoBehaviour
 
         if (wheelPanel == null)
         {
-            Transform root = FindTransformByName(mainCanvasName, wheelPanelName);
-            if (root != null)
-                wheelPanel = root.gameObject;
+            if (playerCanvas != null)
+            {
+                Transform localRoot = FindTransformInChildren(playerCanvas.transform, wheelPanelName);
+                if (localRoot != null)
+                    wheelPanel = localRoot.gameObject;
+            }
+
+            if (wheelPanel == null)
+            {
+                Transform root = FindTransformByName(mainCanvasName, wheelPanelName);
+                if (root != null)
+                    wheelPanel = root.gameObject;
+            }
         }
 
         if (wheelPanel == null && canvas != null)
@@ -385,6 +417,16 @@ public class DoorWheelMinigame : MonoBehaviour
             && spinningWheel != null
             && metaZone != null
             && needle != null;
+    }
+
+    private void ResetRuntimeReferences()
+    {
+        canvas = null;
+        wheelPanel = null;
+        spinningWheel = null;
+        metaZone = null;
+        needle = null;
+        inventoryUI = null;
     }
 
     private Transform FindTransformByName(string rootName, string targetName)

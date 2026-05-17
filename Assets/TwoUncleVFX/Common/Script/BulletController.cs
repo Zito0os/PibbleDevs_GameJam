@@ -33,9 +33,8 @@ namespace VFXTools
 			SetPlay(true);
 		}
 
-		private async void SetPlay(bool play)
+		private void SetPlay(bool play)
 		{
-			//await Task.Delay((int)(delayTime * 1000));
 			isPlay = play;
 		}
 		private void Update()

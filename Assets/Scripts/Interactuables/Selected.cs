@@ -9,6 +9,9 @@ public class Selected : MonoBehaviour
     public Texture2D puntero;
     public GameObject TextDetect;
     GameObject ultimoReconocido = null;
+    private bool isLookingAtInteractable = false;
+    private MultijugadorPlayerContext playerInputContext;
+    private GameObject runtimeInteractPrompt;
 
     // TMP widget inside the "Interactuable-Widget" empty object
     private TextMeshProUGUI interactableWidgetText;
@@ -16,25 +19,28 @@ public class Selected : MonoBehaviour
     void Start()
     {
         mask = LayerMask.GetMask("RayCastDetect");
-        if (TextDetect != null)
-            TextDetect.SetActive(false);
+
+        RefreshInputContext();
+        RefreshInteractPrompt();
+        SetInteractPromptVisible(false);
 
         GameObject widget = GameObject.Find("Interactuable-Widget");
         if (widget != null)
-        {
             interactableWidgetText = widget.GetComponentInChildren<TextMeshProUGUI>(true);
-        }
     }
 
     void Update()
     {
+        RefreshInputContext();
+        RefreshInteractPrompt();
+        isLookingAtInteractable = false;
+
         bool running = DoorWheelMinigame.IsRunning;
 
         if (running)
         {
             Deselect();
-            if (TextDetect != null)
-                TextDetect.SetActive(false);
+            SetInteractPromptVisible(false);
 
             if (interactableWidgetText != null)
             {
@@ -61,12 +67,15 @@ public class Selected : MonoBehaviour
         if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, distancia, mask))
         {
             Deselect();
-            SelectedObject(hit.transform);
+            bool isInteractable = false;
             
             // Check for chest interaction
             if (hit.collider.tag == "Cofre")
             {
-                if (Input.GetKeyDown(KeyCode.E))
+                isInteractable = true;
+                bool interactPressed = playerInputContext != null ? playerInputContext.InteractPressedThisFrame : false;
+
+                if (interactPressed)
                 {
                     hit.collider.GetComponent<ChestController>().AbrirCofre();
                     hit.collider.GetComponent<ChestController>().OnAfterAbrirCofre();
@@ -75,7 +84,10 @@ public class Selected : MonoBehaviour
             // Check for item pickup
             else if (hit.collider.tag == "Item")
             {
-                if (Input.GetKeyDown(KeyCode.E))
+                isInteractable = true;
+                bool interactPressed = playerInputContext != null ? playerInputContext.InteractPressedThisFrame : false;
+
+                if (interactPressed)
                 {
                     ItemPickup itemPickup = hit.collider.GetComponent<ItemPickup>();
                     if (itemPickup != null)
@@ -97,10 +109,13 @@ public class Selected : MonoBehaviour
             }
             else if (hit.collider.tag == "Puerta")
             {
+                isInteractable = true;
                 Door_Controller doorController = hit.collider.GetComponentInParent<Door_Controller>();
                 bool esPuerta = hit.collider.CompareTag("Puerta") || (doorController != null && doorController.CompareTag("Puerta"));
 
-                if (esPuerta && Input.GetKeyDown(KeyCode.E))
+                bool interactPressed = playerInputContext != null ? playerInputContext.InteractPressedThisFrame : false;
+
+                if (esPuerta && interactPressed)
                 {
                     PlayerMovement player = GetComponentInParent<PlayerMovement>();
                     if (player == null)
@@ -114,11 +129,24 @@ public class Selected : MonoBehaviour
                 }
             }
 
+            if (isInteractable)
+            {
+                SelectedObject(hit.transform);
+                isLookingAtInteractable = true;
+            }
+            else
+            {
+                Deselect();
+            }
+
+            SetInteractPromptVisible(isLookingAtInteractable);
+
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.red);
         }
         else
         {
             Deselect();
+            SetInteractPromptVisible(false);
         }
     }
 
@@ -137,6 +165,45 @@ public class Selected : MonoBehaviour
         }
     }
 
+    public void SetInputContext(MultijugadorPlayerContext inputContext)
+    {
+        playerInputContext = inputContext;
+    }
+
+    private void RefreshInteractPrompt()
+    {
+        if (runtimeInteractPrompt != null)
+            return;
+
+        MultijugadorPlayerHUD hud = GetComponentInParent<MultijugadorPlayerHUD>();
+        if (hud != null && hud.interactPrompt != null)
+        {
+            runtimeInteractPrompt = hud.interactPrompt;
+            return;
+        }
+
+        if (TextDetect != null)
+            runtimeInteractPrompt = TextDetect;
+    }
+
+    private void SetInteractPromptVisible(bool visible)
+    {
+        if (runtimeInteractPrompt != null)
+            runtimeInteractPrompt.SetActive(visible);
+        else if (TextDetect != null)
+            TextDetect.SetActive(visible);
+    }
+
+    private void RefreshInputContext()
+    {
+        if (playerInputContext != null)
+            return;
+
+        playerInputContext = GetComponentInParent<MultijugadorPlayerContext>();
+        if (playerInputContext == null)
+            playerInputContext = GetComponent<MultijugadorPlayerContext>();
+    }
+
     void OnGUI()
     {
         GUILayout.BeginHorizontal();
@@ -149,17 +216,5 @@ public class Selected : MonoBehaviour
         //GUI.DrawTexture(rect, puntero);
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
-
-
-        
-
-        if (ultimoReconocido)
-        {
-            TextDetect.SetActive(true);
-        }
-        else
-        {
-            TextDetect.SetActive(false);
-        }
     }
 }

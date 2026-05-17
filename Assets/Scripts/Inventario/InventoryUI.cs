@@ -19,6 +19,7 @@ public class InventoryUI : MonoBehaviour
     private Coroutine clearMessageRoutine;
     private Coroutine clearDoorMessageRoutine;
     private Vector3[] baseSlotScales = new Vector3[5];
+    private bool isBoundToInventory = false;
 
     private void Awake()
     {
@@ -46,26 +47,72 @@ public class InventoryUI : MonoBehaviour
 
     private void Start()
     {
-        if (inventory == null)
-        {
-            Debug.LogWarning("InventoryUI: no se encontró Inventory");
-        }
-        else
-        {
-            inventory.OnInventoryChanged += RefreshUI;
-            inventory.OnInventoryFull += ShowInventoryFullMessage;
-        }
+        SubscribeToInventory();
 
         RefreshUI();
     }
 
     private void OnDestroy()
     {
-        if (inventory != null)
+        UnsubscribeFromInventory();
+    }
+
+    public void ConfigureForPlayer(PlayerMovement targetPlayer, Transform rootOverride = null)
+    {
+        UnsubscribeFromInventory();
+
+        playerMovement = targetPlayer;
+        inventory = playerMovement != null ? playerMovement.GetComponent<Inventory>() : null;
+
+        if (rootOverride != null)
+        {
+            inventoryRoot = rootOverride;
+        }
+        else if (inventoryRoot == null)
+        {
+            inventoryRoot = transform;
+        }
+
+        slotTexts = new TMP_Text[5];
+        slotRoots = new Transform[5];
+        baseSlotScales = new Vector3[5];
+        inventoryMessageText = null;
+        puertaMessageText = null;
+
+        BindSlotTexts();
+        BindSlotRoots();
+        BindMessageText();
+        BindDoorMessageText();
+
+        SubscribeToInventory();
+        RefreshUI();
+    }
+
+    private void SubscribeToInventory()
+    {
+        if (inventory == null)
+        {
+            Debug.LogWarning("InventoryUI: no se encontró Inventory");
+            return;
+        }
+
+        if (isBoundToInventory)
+            return;
+
+        inventory.OnInventoryChanged += RefreshUI;
+        inventory.OnInventoryFull += ShowInventoryFullMessage;
+        isBoundToInventory = true;
+    }
+
+    private void UnsubscribeFromInventory()
+    {
+        if (inventory != null && isBoundToInventory)
         {
             inventory.OnInventoryChanged -= RefreshUI;
             inventory.OnInventoryFull -= ShowInventoryFullMessage;
         }
+
+        isBoundToInventory = false;
     }
 
     private void BindSlotTexts()
@@ -107,13 +154,11 @@ public class InventoryUI : MonoBehaviour
         if (inventoryMessageText != null)
             return;
 
-        inventoryMessageText = FindTextInChildren(inventoryRoot, "Inventario_text");
-
-        if (inventoryMessageText == null)
-            inventoryMessageText = FindTextInChildren(inventoryRoot, "InventoryMessage_text");
-
-        if (inventoryMessageText == null)
-            inventoryMessageText = FindTextInChildren(inventoryRoot, "Status_text");
+        inventoryMessageText = FindTextByAnyName(inventoryRoot,
+            "Inventario_text",
+            "inventario_txt",
+            "InventoryMessage_text",
+            "Status_text");
     }
 
     private void BindDoorMessageText()
@@ -121,14 +166,24 @@ public class InventoryUI : MonoBehaviour
         if (puertaMessageText != null)
             return;
 
-        GameObject mainCanvas = GameObject.Find("MAIN_CANVA");
-        Transform searchRoot = mainCanvas != null ? mainCanvas.transform : inventoryRoot;
-        puertaMessageText = FindTextInChildren(searchRoot, "Puerta_txt");
+        puertaMessageText = FindTextByAnyName(inventoryRoot,
+            "Puerta_txt",
+            "puerta_txt");
+    }
 
-        if (puertaMessageText == null)
+    private TMP_Text FindTextByAnyName(Transform root, params string[] targetNames)
+    {
+        if (root == null || targetNames == null)
+            return null;
+
+        foreach (string targetName in targetNames)
         {
-            puertaMessageText = FindTextInChildren(inventoryRoot, "Puerta_txt");
+            TMP_Text foundText = FindTextInChildren(root, targetName);
+            if (foundText != null)
+                return foundText;
         }
+
+        return null;
     }
 
     private TMP_Text FindTextInChildren(Transform root, string targetName)
@@ -205,7 +260,7 @@ public class InventoryUI : MonoBehaviour
             }
 
             Vector3 baseScale = baseSlotScales[i];
-            slotRoots[i].localScale = i == inventory.activeSlotIndex
+            slotRoots[i].localScale = inventory.activeSlotIndex >= 0 && i == inventory.activeSlotIndex
                 ? Vector3.Scale(baseScale, selectedSlotScale)
                 : baseScale;
         }
