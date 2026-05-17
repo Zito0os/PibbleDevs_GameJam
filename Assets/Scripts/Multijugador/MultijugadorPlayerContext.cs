@@ -69,6 +69,10 @@ public class MultijugadorPlayerContext : MonoBehaviour
         ? WasKeyboardPressed(KeyCode.E)
         : assignedGamepad != null ? assignedGamepad.buttonNorth.wasPressedThisFrame : WasPressed(interactAction);
 
+    public bool HelpTogglePressedThisFrame => IsKeyboardMouse
+        ? WasKeyboardPressed(KeyCode.Tab)
+        : assignedGamepad != null ? assignedGamepad.leftShoulder.wasPressedThisFrame : Gamepad.current != null && Gamepad.current.leftShoulder.wasPressedThisFrame;
+
     public bool CyclePreviousPressedThisFrame => IsKeyboardMouse
         ? WasKeyboardPressed(KeyCode.Alpha1)
         : assignedGamepad != null ? assignedGamepad.dpad.left.wasPressedThisFrame : WasPressed(previousAction);
@@ -176,6 +180,7 @@ public class MultijugadorPlayerContext : MonoBehaviour
         return key switch
         {
             KeyCode.Space => Keyboard.current.spaceKey.wasPressedThisFrame,
+            KeyCode.Tab => Keyboard.current.tabKey.wasPressedThisFrame,
             KeyCode.E => Keyboard.current.eKey.wasPressedThisFrame,
             KeyCode.Alpha1 => Keyboard.current.digit1Key.wasPressedThisFrame,
             KeyCode.Alpha2 => Keyboard.current.digit2Key.wasPressedThisFrame,

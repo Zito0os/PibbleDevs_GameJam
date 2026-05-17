@@ -312,6 +312,15 @@ public class MultijugadorManager : MonoBehaviour
 
         hudLink.Bind(hudCanvas, inventoryUI, staminaBar, miniMapImage, minimapCamera, interactPrompt, llaveEncontrada);
 
+        // Bind per-hud Ver_teclas (help panel) to the player's input context so only that HUD
+        // responds to the player's TAB / L1 presses.
+        MultijugadorPlayerContext context = playerObject.GetComponent<MultijugadorPlayerContext>();
+        Ver_teclas verTeclas = hudRoot.GetComponentInChildren<Ver_teclas>(true);
+        if (verTeclas != null && context != null)
+        {
+            verTeclas.Bind(context);
+        }
+
         if (isPrimaryHud)
         {
             hudRoot.name = MultijugadorUIConstants.MainCanvasRootName;
