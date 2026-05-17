@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Castillo.unity
     guid: 985988639000e5b4d87160610fa2a771
+  - enabled: 1
+    path: Assets/Scenes/Menu_Principal.unity
+    guid: a283cd6ddac9bbd47838b1dc77af5775
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

@@ -85,6 +85,17 @@ public class InventoryUI : MonoBehaviour
         BindDoorMessageText();
 
         SubscribeToInventory();
+        // Ensure any Inventario_img UI under this inventory root is bound to the correct Inventory
+        if (inventory != null && inventoryRoot != null)
+        {
+            Inventario_img[] invImgs = inventoryRoot.GetComponentsInChildren<Inventario_img>(true);
+            foreach (Inventario_img img in invImgs)
+            {
+                if (img != null)
+                    img.BindToInventory(inventory);
+            }
+        }
+
         RefreshUI();
     }
 

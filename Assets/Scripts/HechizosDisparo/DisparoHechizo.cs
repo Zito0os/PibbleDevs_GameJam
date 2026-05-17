@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class DisparoHechizo : MonoBehaviour
 {
@@ -9,11 +10,18 @@ public class DisparoHechizo : MonoBehaviour
     public GameObject spellFreezePrefab;
     public GameObject spellClearPrefab;
     public float HechizoSpeed = 10f;
+    public float delayDisparo = 0.15f;
     private Inventory inventory;
     private MultijugadorPlayerContext playerInputContext;
+    private PlayerMovement ownerPlayerMovement;
+    private Coroutine shootRoutine;
 
     private void Start()
     {
+        ownerPlayerMovement = GetComponentInParent<PlayerMovement>();
+        if (ownerPlayerMovement == null)
+            ownerPlayerMovement = GetComponent<PlayerMovement>();
+
         inventory = GetComponentInParent<Inventory>();
         if (inventory == null)
             inventory = GetComponent<Inventory>();
@@ -47,13 +55,39 @@ public class DisparoHechizo : MonoBehaviour
         if (inventory == null || !EsHechizoInventario(inventory.activeItemType))
             return;
 
-        //Disparar con el botón de ataque del jugador
-        GameObject prefab = ResolveSpellPrefab(inventory.activeItemType);
-        if (prefab == null)
-            return;
+        if (ownerPlayerMovement != null)
+            ownerPlayerMovement.PlaySpellCastAnimation();
+
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+
+        ItemType itemTypeToShoot = inventory.activeItemType;
+        shootRoutine = StartCoroutine(ShootSpellAfterDelay(itemTypeToShoot));
+    }
+
+    private IEnumerator ShootSpellAfterDelay(ItemType itemType)
+    {
+        if (delayDisparo > 0f)
+            yield return new WaitForSeconds(delayDisparo);
+
+        if (inventory == null)
+        {
+            shootRoutine = null;
+            yield break;
+        }
 
         if (!inventory.UseSelectedItem())
-            return;
+        {
+            shootRoutine = null;
+            yield break;
+        }
+
+        GameObject prefab = ResolveSpellPrefab(itemType);
+        if (prefab == null)
+        {
+            shootRoutine = null;
+            yield break;
+        }
 
         Transform spawn = HechizoSpawnPoint != null ? HechizoSpawnPoint : transform;
         var hechizo = Instantiate(prefab, spawn.position, spawn.rotation);
@@ -68,8 +102,10 @@ public class DisparoHechizo : MonoBehaviour
         if (projectile != null)
         {
             projectile.SetOwner(transform);
-            projectile.ConfigureFromItem(inventory.activeItemType);
+            projectile.ConfigureFromItem(itemType);
         }
+
+        shootRoutine = null;
     }
 
     private bool EsHechizoInventario(ItemType itemType)

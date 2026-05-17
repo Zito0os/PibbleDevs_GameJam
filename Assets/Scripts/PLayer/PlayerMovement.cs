@@ -24,10 +24,13 @@ public class PlayerMovement : MonoBehaviour
     private float sprintSpeed = 1f;
 
     public float staminaUseAmount = 5f;
+    [SerializeField] private string attackAnimationBoolName = "Atack";
+    [SerializeField] private float attackAnimationHoldTime = 0.15f;
 
     private StaminaBar staminaSlider;
     private Inventory inventory;
     private MultijugadorPlayerContext playerInputContext;
+    private Coroutine attackAnimationRoutine;
 
     [Header("Audio pasos")]
     public AudioSource audioPasosCaminar;
@@ -159,12 +162,17 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         // Hechizos se consumen en DisparoHechizo.cs
-        if (EsHechizoInventario(inventory.activeItemType))
+        if (EsHechizoInventario(inventory.activeItemType) || EsLlaveInventario(inventory.activeItemType))
             return;
 
         bool used = inventory.UseSelectedItem();
         if (used)
             Debug.Log($"PlayerMovement: item usado con click izquierdo desde slot {inventory.activeSlotIndex + 1}.");
+    }
+
+    private bool EsLlaveInventario(ItemType itemType)
+    {
+        return itemType == ItemType.KeyGold || itemType == ItemType.KeySilver;
     }
 
     private bool EsHechizoInventario(ItemType itemType)
@@ -239,6 +247,30 @@ public class PlayerMovement : MonoBehaviour
     {
         if (inventory != null)
             inventory.Clear();
+    }
+
+    public void PlaySpellCastAnimation()
+    {
+        if (animator == null)
+            return;
+
+        if (attackAnimationRoutine != null)
+            StopCoroutine(attackAnimationRoutine);
+
+        attackAnimationRoutine = StartCoroutine(PlayAttackAnimationRoutine());
+    }
+
+    private IEnumerator PlayAttackAnimationRoutine()
+    {
+        if (animator != null)
+            animator.SetBool(attackAnimationBoolName, true);
+
+        yield return new WaitForSeconds(attackAnimationHoldTime);
+
+        if (animator != null)
+            animator.SetBool(attackAnimationBoolName, false);
+
+        attackAnimationRoutine = null;
     }
 
     private IEnumerator ApplySlowRoutine(float multiplier, float duration)

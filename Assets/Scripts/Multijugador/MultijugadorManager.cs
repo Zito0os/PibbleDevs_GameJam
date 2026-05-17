@@ -203,6 +203,15 @@ public class MultijugadorManager : MonoBehaviour
             gamepad = gamepad
         });
 
+        int playerIndex = joinedPlayers.Count - 1;
+        playerObject.name = "Jugador " + (playerIndex + 1);
+
+        EventManager eventManager = EventManager.Instance != null ? EventManager.Instance : FindFirstObjectByType<EventManager>();
+        if (eventManager != null)
+        {
+            eventManager.RegisterPlayer(playerIndex, playerMovement);
+        }
+
         if (debugLogs)
         {
             string deviceName = mode == MultijugadorPlayerContext.ControlMode.KeyboardMouse ? "Keyboard&Mouse" : gamepad != null ? gamepad.displayName : "Gamepad";
