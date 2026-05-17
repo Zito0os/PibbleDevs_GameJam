@@ -20997,7 +20997,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c0ded024d2dfb94f824eece49ef1050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mnu_Principal
-  escenaJuego: Castillo
+  escenaJuego: Comic-Inicio
   escenaMenu: MenuPrincipal
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

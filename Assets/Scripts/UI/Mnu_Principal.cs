@@ -4,12 +4,12 @@ using UnityEngine.SceneManagement;
 public class Mnu_Principal : MonoBehaviour
 {
 	[Header("Scenes")]
-	[SerializeField] private string escenaJuego = "Castillo";
+	[SerializeField] private string escenaVideo = "Comic-Inicio";
 	[SerializeField] private string escenaMenu = "MenuPrincipal";
 
 	public void Jugar()
 	{
-		CargarEscena(escenaJuego);
+		CargarEscena(escenaVideo);
 	}
 
 	public void VolverAlMenu()

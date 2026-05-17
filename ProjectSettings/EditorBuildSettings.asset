@@ -6,11 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Menu_Principal.unity
+    guid: a283cd6ddac9bbd47838b1dc77af5775
+  - enabled: 1
+    path: Assets/Scenes/Comic-Inicio.unity
+    guid: 047482148f8924e49bf287310c018384
+  - enabled: 1
     path: Assets/Scenes/Castillo.unity
     guid: 985988639000e5b4d87160610fa2a771
   - enabled: 1
-    path: Assets/Scenes/Menu_Principal.unity
-    guid: a283cd6ddac9bbd47838b1dc77af5775
+    path: Assets/Scenes/Comic-Final.unity
+    guid: b7939bd6e2524034a9a183cac5478c03
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

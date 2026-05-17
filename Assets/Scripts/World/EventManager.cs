@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 public class EventManager : MonoBehaviour
@@ -14,6 +15,8 @@ public class EventManager : MonoBehaviour
 	public Door_Controller Puerta_Ganadora;
 	public string nombreCampeona = string.Empty;
 	public bool partidaTerminada = false;
+	[SerializeField] private string escenaVictoria = "Comic-Final";
+	private bool escenaVictoriaCargada = false;
 
 	[Header("Key Found")]
 	public bool llaveDoradaEncontrada = false;
@@ -54,7 +57,7 @@ public class EventManager : MonoBehaviour
 		if (jugador1 != null && jugador2 != null)
 			return;
 
-		PlayerMovement[] players = FindObjectsOfType<PlayerMovement>(true);
+		PlayerMovement[] players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
 		if (players == null || players.Length == 0)
 			return;
 
@@ -67,7 +70,7 @@ public class EventManager : MonoBehaviour
 
 	public void SelectWinningDoor()
 	{
-		Door_Controller[] doors = FindObjectsOfType<Door_Controller>(true);
+		Door_Controller[] doors = FindObjectsByType<Door_Controller>(FindObjectsSortMode.None);
 		if (doors == null || doors.Length == 0)
 			return;
 
@@ -105,6 +108,20 @@ public class EventManager : MonoBehaviour
 
 		if (debugLogs)
 			Debug.Log("EventManager: victoria de " + nombreCampeona + " al abrir " + door.name);
+
+		TerminarPartida();
+	}
+
+	private void TerminarPartida()
+	{
+		if (!partidaTerminada || escenaVictoriaCargada)
+			return;
+
+		if (string.IsNullOrWhiteSpace(escenaVictoria))
+			return;
+
+		escenaVictoriaCargada = true;
+		SceneManager.LoadScene(escenaVictoria);
 	}
 
 	public void NotifyGoldenKeyFound(PlayerMovement player)
